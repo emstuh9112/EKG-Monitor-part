@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<title>EMS Monitor – Simulation</title>
+<style>
+:root{--bg:#050a0b;--panel:#071112;--grid:#17302d;--green:#35ff78;--cyan:#37e7ef;--yellow:#ffe45c;--white:#e9f4f1;--muted:#8da6a0;--red:#ff5757}
+*{box-sizing:border-box}
+body{margin:0;background:#10191b;color:var(--white);font-family:Arial,"Tahoma",sans-serif;min-height:100vh;padding:14px}
+.monitor{width:min(1500px,100%);background:#111b1d;border:2px solid #435357;border-radius:18px;padding:14px;box-shadow:0 20px 60px #0009}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:3px 5px 12px;flex-wrap:wrap}
+.brand{font-weight:800;letter-spacing:1.5px;font-size:clamp(16px,2vw,23px)}
+.brand span{color:var(--green)}
+.status{display:flex;gap:14px;align-items:center;color:#b7c9c5;font-size:12px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px;box-shadow:0 0 8px var(--green)}
+.controls{display:flex;gap:8px;flex-wrap:wrap}
+button{border:1px solid #53696b;background:#263638;color:#f2f7f5;padding:9px 13px;border-radius:7px;font-weight:700;cursor:pointer}
+button:hover{background:#35494b}
+button.active{border-color:var(--green);color:var(--green)}
+.screen{background:var(--bg);border:2px solid #263b3a;border-radius:8px;padding:10px;display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:10px;min-height:560px}
+.wave-area{display:flex;flex-direction:column;gap:7px;min-width:0}
+.wave-row{position:relative;height:clamp(105px,17vh,150px);background-color:#03090a;border:1px solid #172c2a;overflow:hidden;border-radius:3px}
+.wave-row canvas{width:100%;height:100%;display:block}
+.wave-label{position:absolute;top:7px;left:9px;z-index:2;font-size:13px;font-weight:800;text-shadow:0 1px 4px #000}
+.wave-scale{position:absolute;right:8px;top:7px;font-size:10px;color:#6c8980}
+.values{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,1fr);gap:8px;min-width:0}
+.value{background:#03090a;border:1px solid #1b302f;border-radius:4px;padding:10px 9px;display:flex;flex-direction:column;justify-content:space-between;min-height:105px}
+.value .label{font-size:13px;font-weight:800;letter-spacing:.5px}
+.value .number{font-size:clamp(34px,5vw,58px);font-weight:700;line-height:1;letter-spacing:-2px}
+.value .unit{font-size:11px;color:#9ab0aa}
+.green{color:var(--green)}.cyan{color:var(--cyan)}.yellow{color:var(--yellow)}.white{color:var(--white)}
+.bp{grid-column:span 2;min-height:110px}
+.bp .number{font-size:clamp(32px,4.5vw,52px)}
+.footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#8da6a0;font-size:11px;padding:10px 4px 0}
+.notice{color:#ffc95a;font-weight:700}
+.shell{width:min(1500px,100%);margin:0 auto}
+.room-panel{background:#142326;border:1px solid #40595b;border-radius:12px;padding:13px 15px;margin:0 auto 12px;color:#e9f4f1}
+.room-panel h2{font-size:16px;margin:0 0 6px}
+.room-help{font-size:12px;color:#a9c1bb;margin:0 0 10px}
+.firebase-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.firebase-grid label{display:block;font-size:10px;color:#a9c1bb;margin-bottom:4px}
+.firebase-grid input{width:100%;min-width:0;padding:8px;border-radius:6px;border:1px solid #52696b;background:#071416;color:#fff}
+.room-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+.pin-line{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:8px}
+.pin-number{font-size:34px;letter-spacing:8px;font-weight:900;color:#ffe45c;min-width:170px}
+.room-status{font-size:12px;color:#b7c9c5}
+.credit{font-size:10px;color:#81928f;text-align:center;padding:9px 0 2px;letter-spacing:.2px}
+@media(max-width:850px){.firebase-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){body{padding:6px}.room-panel{padding:10px}.pin-number{font-size:29px}}
+@media(max-width:760px){body{padding:5px}.monitor{padding:8px;border-radius:10px}.screen{grid-template-columns:1fr;min-height:0;padding:6px}.wave-row{height:105px}.values{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto}.value{min-height:95px}.bp{grid-column:span 2}.value .number{font-size:42px}.topbar{padding-bottom:8px}.status{font-size:10px}}
+@media(max-width:380px){.value .number{font-size:34px}.value{padding:8px 6px}.label{font-size:11px!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+<section class="room-panel">
+  <h2>EMS THAMMASAT · Simulation Room</h2>
+  <p class="room-help">กดสร้างห้อง ระบบจะเชื่อมต่อ Firebase ให้อัตโนมัติและสุ่ม PIN 6 หลัก จากนั้นแจ้ง PIN นี้แก่ผู้ควบคุมที่ใช้ App 2</p>
+  <div class="room-actions">
+    <button id="createRoom">＋ สร้างห้อง / สุ่ม PIN</button>
+    <button id="copyPin" disabled>คัดลอก PIN</button>
+    <button id="closeRoom" disabled>ปิดห้อง</button>
+  </div>
+  <div class="pin-line"><div class="pin-number" id="pinDisplay">------</div><div class="room-status" id="roomStatus">ยังไม่ได้สร้างห้อง</div></div>
+</section>
+<main class="monitor">
+  <header class="topbar">
+    <div class="brand">EMS <span>THAMMASAT</span> | PATIENT MONITOR</div>
+    <div class="status"><span><i class="dot"></i>MONITORING</span><span>SIMULATION MODE</span><span id="clock">--:--:--</span></div>
+    <div class="controls">
+      <button id="soundBtn" class="active">♫ เสียง HR: ON</button>
+      <button id="pauseBtn">Ⅱ หยุดคลื่น</button>
+      <button id="fullBtn">⛶ เต็มจอ</button>
+    </div>
+  </header>
+  <section class="screen">
+    <div class="wave-area">
+      <div class="wave-row"><div class="wave-label green">Ⅱ  ECG</div><div class="wave-scale">25 mm/s · 10 mm/mV</div><canvas id="ecg"></canvas></div>
+      <div class="wave-row"><div class="wave-label cyan">PLETH · SpO₂</div><div class="wave-scale">Plethysmograph</div><canvas id="pleth"></canvas></div>
+      <div class="wave-row"><div class="wave-label yellow">CO₂ · EtCO₂</div><div class="wave-scale">Capnography</div><canvas id="capno"></canvas></div>
+    </div>
+    <aside class="values">
+      <div class="value"><div class="label green">HR</div><div class="number green" id="hr">75</div><div class="unit">bpm · ECG</div></div>
+      <div class="value"><div class="label cyan">SpO₂</div><div class="number cyan" id="spo2">98</div><div class="unit">%</div></div>
+      <div class="value bp"><div class="label white">NIBP</div><div class="number white" id="bp">120/80 <small style="font-size:17px"> (93)</small></div><div class="unit">mmHg · SYS / DIA (MAP)</div></div>
+      <div class="value"><div class="label yellow">EtCO₂</div><div class="number yellow" id="etco2">38</div><div class="unit">mmHg</div></div>
+      <div class="value"><div class="label green">RR</div><div class="number green" id="rr">16</div><div class="unit">breaths/min</div></div>
+      <div class="value"><div class="label white">TEMP</div><div class="number white" id="temp">36.8</div><div class="unit">°C</div></div>
+      <div class="value"><div class="label white">ECG LEAD</div><div class="number white" style="font-size:30px">II</div><div class="unit">Lead selected</div></div>
+    </aside>
+  </section>
+  <div id="liveScenario" style="display:flex;gap:14px;flex-wrap:wrap;background:#091516;border:1px solid #263b3a;border-radius:5px;padding:8px 10px;margin-top:8px;font-size:11px;color:#b8d2ca">
+    <span>RHYTHM: <b id="rhythmText">NSR</b></span><span id="therapyText">THERAPY: —</span><span id="ecgText">12-LEAD: —</span>
+  </div>
+  <footer class="footer"><span>Patient: SIMULATION · Adult</span><span class="notice">FOR TRAINING / SIMULATION ONLY — NOT FOR CLINICAL USE</span><span>EMS THAMMASAT</span></footer>
+</main>
+<div class="credit">Wittaya Pholoung : ENP Thammasat</div>
+</div>
+<script>
+let HR=75, period=60/HR, activeRhythm="nsr";
+let paused=false,soundOn=true, audioCtx=null,lastBeat=-1,start=performance.now(),rhythmEvents=[];
+const colors={ecg:'#35ff78',pleth:'#37e7ef',capno:'#ffe45c'};
+function setupCanvas(id){const c=document.getElementById(id),ctx=c.getContext('2d');function resize(){const r=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;c.width=Math.max(1,Math.floor(r.width*dpr));c.height=Math.max(1,Math.floor(r.height*dpr));ctx.setTransform(dpr,0,0,dpr,0,0)}resize();new ResizeObserver(resize).observe(c);return {c,ctx}}
+const canvases={ecg:setupCanvas('ecg'),pleth:setupCanvas('pleth'),capno:setupCanvas('capno')};
+function gauss(x,m,s){return Math.exp(-Math.pow((x-m)/s,2)/2)}
+function seeded(n){const x=Math.sin(n*127.1+activeRhythm.length*31.7)*43758.5453;return x-Math.floor(x)}
+function buildRhythmEvents(){
+  rhythmEvents=[];lastBeat=-1;const rate=Math.max(20,Math.min(300,HR||75)),base=60/rate;let t=-12,n=0;
+  while(t<3600){let rr=base,kind='normal';
+    if(activeRhythm==='af'||activeRhythm==='af_rvr'||activeRhythm==='af_slow')rr=base*(.58+seeded(n+2)*.84);
+    if(activeRhythm==='sinus_arrhythmia')rr=base*(.82+.36*Math.sin(n*1.7));
+    if(activeRhythm==='sinus_pause'&&n%7===5)rr=base*2.8;
+    if(activeRhythm==='pac'&&n%4===2)rr=base*.62;
+    if((activeRhythm==='bigeminy'&&n%2===1)||(activeRhythm==='trigeminy'&&n%3===2)||(activeRhythm==='pvc'&&n%5===3)){rr=base*.58;kind='pvc'}
+    if(activeRhythm==='mobitz1'&&n%4===3)kind='dropped';
+    if(activeRhythm==='mobitz2'&&n%3===2)kind='dropped';
+    if(activeRhythm==='junctional'||activeRhythm==='junctional_brady'||activeRhythm==='junctional_accel'||activeRhythm==='junctional_tachy')kind='junctional';
+    if(['idioventricular','aivr','vt_mono','vt_poly','torsades'].includes(activeRhythm))kind='wide';
+    if(activeRhythm==='paced_v'||activeRhythm==='paced_dual')kind='paced';
+    if(activeRhythm==='paced_a')kind='atrial_paced';
+    if(activeRhythm==='av3')kind='wide';
+    if(activeRhythm==='artifact')kind='artifact';
+    if(activeRhythm!=='asystole'&&activeRhythm!=='vf')rhythmEvents.push({t,kind:kind==='dropped'?'blocked_p':kind,n});
+    t+=Math.max(.18,rr);n++;
+  }
+}
+function ecgWave(p){return 0;}
+function ecgValueAt(sec){
+  const r=activeRhythm;
+  if(r==='asystole')return .004*Math.sin(sec*5.1)+.002*Math.sin(sec*11.7);
+  if(r==='vf')return .27*Math.sin(sec*37+Math.sin(sec*8)*2)+.16*Math.sin(sec*61+1.4)+.10*Math.sin(sec*93+Math.sin(sec*13))+ .06*Math.sin(sec*17);
+  if(r==='torsades'||r==='vt_poly'){const twist=Math.sin(sec*2.7);return (.40+.27*Math.sin(sec*1.8))*Math.sin(sec*31+Math.sin(sec*3)*2.4)+.13*Math.sin(sec*57+twist*2)}
+  let y=0;
+  if(r==='af'||r==='af_rvr'||r==='af_slow')y=.035*Math.sin(sec*31+Math.sin(sec*7)*2)+.022*Math.sin(sec*47+1.3)+.012*Math.sin(sec*19);
+  if(r==='flutter')y+=.085*(2/Math.PI)*Math.asin(Math.sin(2*Math.PI*5.0*sec));
+  if(r==='mat')y+=.008*Math.sin(sec*21);
+  if(r==='artifact')y+=.13*Math.sin(sec*17)+.07*Math.sin(sec*39)+.035*Math.sin(sec*71);
+  let lo=0,hi=rhythmEvents.length;while(lo<hi){const mid=(lo+hi)>>1;if(rhythmEvents[mid].t<=sec)lo=mid+1;else hi=mid;}
+  for(let i=lo-1;i>=0;i--){const e=rhythmEvents[i],d=sec-e.t;if(d>.72)break;
+    if(e.kind==='blocked_p'){y+=.13*gauss(d,-.18,.035)}
+    else if(e.kind==='pvc'||e.kind==='wide'){
+      const width=(r==='vt_mono'||r==='vt_poly'||r==='torsades') ? .095 : .075;
+      y+=-.24*gauss(d,-.045,width*.65)+.92*gauss(d,.015,width)+-.38*gauss(d,.105,width*1.2)+.18*gauss(d,.31,.12);
+    }else if(e.kind==='paced'||e.kind==='atrial_paced'){
+      if(e.kind==='atrial_paced'){y+=.95*gauss(d,-.18,.003)+.14*gauss(d,-.13,.035)-.16*gauss(d,-.035,.012)+.95*gauss(d,0,.012)-.25*gauss(d,.04,.018)+.25*gauss(d,.27,.08)}
+      else {y+=.95*gauss(d,-.012,.003)-.22*gauss(d,.018,.004);if(r==='paced_dual')y+=.95*gauss(d,-.19,.003)+.13*gauss(d,-.14,.035);y+=-.20*gauss(d,.025,.012)+.95*gauss(d,.065,.035)-.30*gauss(d,.12,.03)+.22*gauss(d,.34,.10)}
+    }else if(e.kind==='junctional'){
+      y+=-.13*gauss(d,-.025,.012)+.95*gauss(d,0,.012)-.25*gauss(d,.035,.018)+.24*gauss(d,.25,.075)-.12*gauss(d,.11,.025);
+    }else{
+      const noP=['af','af_rvr','af_slow','flutter','svt','vt_mono','vt_poly','torsades','idioventricular','aivr','av3'].includes(r);
+      if(!noP){let pAmp=.13,pTime=-.18;if(r==='atrial_tachy'){pAmp=-.14;pTime=-.16}if(r==='av1')pTime=-.27;if(r==='pac'&&e.n%4===2){pAmp=-.12;pTime=-.12}if(r==='mat'){pAmp=[.13,-.11,.20][e.n%3];pTime=-.18+((e.n%3)-1)*.025}if(r==='mobitz1')pTime=-(.18+.035*(e.n%3));if(r==='mobitz2')pTime=-.18;y+=pAmp*gauss(d,pTime,.035)}
+
+      let qrs=.012,amp=1;
+      if(r==='rbbb'||r==='lbbb'||r==='bifascicular')qrs=.035;
+      if(r==='vt_poly')amp=.65+.45*seeded(e.n+19);
+      if(r==='torsades')amp=.25+.85*(.5+.5*Math.sin(e.n*.72));
+      y+=-.16*gauss(d,-.035,qrs*.8)+amp*gauss(d,0,qrs)-.28*gauss(d,.045,qrs*1.2);
+      if(r==='rbbb'||r==='bifascicular')y+=.20*gauss(d,.085,.025)-.20*gauss(d,.29,.07);
+      else if(r==='lbbb')y+=.32*gauss(d,.09,.07)-.18*gauss(d,.32,.08);
+      else y+=.28*gauss(d,.27,.075);
+    }
+  }
+  if(r==='flutter')y+=.025*Math.sin(2*Math.PI*5*sec);
+  if(r==='av3'){const ap=((sec*1.25)%1);y+=.12*gauss(ap,.22,.035)} // independent atrial activity, dissociated from QRS
+  if(r==='agonal')y+=.04*Math.sin(sec*8)+.18*Math.sin(sec*2.1);
+  return y;
+}
+function plethWave(p){if(p<.12)return 0;if(p<.28)return (p-.12)/.16;if(p<.38)return 1-(p-.28)/.10*.35;if(p<.62)return .65-(p-.38)/.24*.55;return .10}
+function capWave(p){if(p<.12)return 0;if(p<.22)return (p-.12)/.10*.78;if(p<.68)return .78;if(p<.78)return .78*(1-(p-.68)/.10);return 0}
+function drawGrid(ctx,w,h){ctx.fillStyle='#03090a';ctx.fillRect(0,0,w,h);ctx.lineWidth=.6;ctx.strokeStyle='#102522';for(let x=0;x<w;x+=10){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}for(let y=0;y<h;y+=10){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}ctx.strokeStyle='#1b3932';ctx.lineWidth=1;for(let x=0;x<w;x+=50){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}for(let y=0;y<h;y+=50){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}}
+function draw(id,fn,amp,baseline,t,color,cycle){const {c,ctx}=canvases[id],w=c.clientWidth,h=c.clientHeight;drawGrid(ctx,w,h);ctx.save();ctx.beginPath();ctx.rect(0,0,w,h);ctx.clip();ctx.strokeStyle=color;ctx.lineWidth=2;ctx.shadowColor=color;ctx.shadowBlur=5;ctx.beginPath();for(let x=0;x<w;x++){const time=t-(w-x)/105;let p=((time/period)%1+1)%1;let val=id==='ecg'?ecgValueAt(time):fn(p);let y=baseline-val*amp;if(id==='pleth')y+=Math.sin(time*2)*.6;if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)}ctx.stroke();ctx.restore()}
+function beep(){if(!soundOn)return;try{audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.value=880;g.gain.setValueAtTime(.0001,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.12,audioCtx.currentTime+.006);g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+.055);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.06)}catch(e){}}
+function tick(now){const t=(now-start)/1000;if(!paused){draw('ecg',ecgWave,42,canvases.ecg.c.clientHeight*.57,t,colors.ecg);draw('pleth',plethWave,65,canvases.pleth.c.clientHeight*.82,t,colors.pleth);draw('capno',capWave,62,canvases.capno.c.clientHeight*.82,t,colors.capno);let current=null;for(let i=rhythmEvents.length-1;i>=0;i--){if(rhythmEvents[i].t<=t){current=rhythmEvents[i];break}}if(current&&current.n!==lastBeat){lastBeat=current.n;if(!['vf','asystole'].includes(activeRhythm))beep()}}requestAnimationFrame(tick)}
+buildRhythmEvents();
+requestAnimationFrame(tick);
+function updateClock(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('th-TH',{hour12:false})}updateClock();setInterval(updateClock,1000);
+document.getElementById('soundBtn').onclick=e=>{soundOn=!soundOn;e.currentTarget.textContent='♫ เสียง HR: '+(soundOn?'ON':'OFF');e.currentTarget.classList.toggle('active',soundOn);if(soundOn)beep()};
+document.getElementById('pauseBtn').onclick=e=>{paused=!paused;e.currentTarget.textContent=paused?'▶ เล่นคลื่น':'Ⅱ หยุดคลื่น';e.currentTarget.classList.toggle('active',paused)};
+document.getElementById('fullBtn').onclick=async()=>{try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch(e){}};
+
+// Firebase configuration is embedded so users do not need to enter it.
+const firebaseConfig = {
+  apiKey: "AIzaSyC0NcHBU6Ice_hjUe3RrniHWRGqeJO7JO0",
+  authDomain: "ems-thammasat.firebaseapp.com",
+  databaseURL: "https://ems-thammasat-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "ems-thammasat",
+  storageBucket: "ems-thammasat.firebasestorage.app",
+  messagingSenderId: "699386284101",
+  appId: "1:699386284101:web:8cbc1b31ca1d8a75b27b2c"
+};
+let monitorDb=null, monitorRoom=null, monitorPin=null, monitorStateListener=null;
+const roomStatusEl=document.getElementById("roomStatus");
+function setRoomStatus(msg){roomStatusEl.textContent=msg}
+async function createRoom(){
+  const createBtn=document.getElementById("createRoom");
+  createBtn.disabled=true;setRoomStatus("กำลังเชื่อมต่อ Firebase...");
+  try{
+    if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+    if(!firebase.auth().currentUser)await firebase.auth().signInAnonymously();
+    monitorDb=firebase.database();
+    let chosen=null;
+    for(let attempt=0;attempt<20&&!chosen;attempt++){
+      const random=new Uint32Array(1);crypto.getRandomValues(random);
+      const pin=String(100000+(random[0]%900000));
+      const infoRef=monitorDb.ref("emsMonitorRooms/"+pin+"/roomInfo");
+      const result=await infoRef.transaction(current=>{
+        if(current===null)return {pin,status:"open",createdAt:firebase.database.ServerValue.TIMESTAMP,createdBy:"App 1 Monitor"};
+        return;
+      });
+      if(result.committed)chosen=pin;
+    }
+    if(!chosen)throw new Error("ไม่สามารถสร้าง PIN ที่ว่างได้ กรุณาลองอีกครั้ง");
+    monitorPin=chosen;monitorRoom=monitorDb.ref("emsMonitorRooms/"+monitorPin);
+    await monitorRoom.child("state").update({
+      vitals:{hr:75,spo2:98,rr:16,nibp:{sys:120,dia:80},etco2:38,temp:36.8,pleth:75,capno:75},
+      rhythm:{group:"sinus",rhythm:"nsr",rate:75},
+      therapy:{mode:"Monitor",energy:200,paceRate:70,paceMa:60,status:"Ready"},
+      ecg12lead:{pattern:"normal",patternLabel:"Normal / no acute ST elevation",rate:75,patientId:"",leads:[],timestamp:null}
+    });
+    document.getElementById("pinDisplay").textContent=monitorPin;
+    document.getElementById("copyPin").disabled=false;
+    document.getElementById("closeRoom").disabled=false;
+    setRoomStatus("สร้างห้องสำเร็จ · ให้ผู้ควบคุมกรอก PIN นี้ใน App 2");
+    monitorStateListener=snapshot=>{
+      const state=snapshot.val()||{};
+      if(state.vitals)applyMonitorVitals(state.vitals);
+      if(state.rhythm)applyMonitorRhythm(state.rhythm);
+      if(state.therapy)applyMonitorTherapy(state.therapy);
+      if(state.ecg12lead)applyMonitorECG(state.ecg12lead);
+    };
+    monitorRoom.child("state").on("value",monitorStateListener);
+  }catch(err){console.error(err);setRoomStatus("สร้างห้องไม่สำเร็จ: "+err.message)}
+  finally{createBtn.disabled=false}
+}
+function applyMonitorVitals(d){
+  if(d.hr!==undefined)document.getElementById("hr").textContent=d.hr;
+  if(d.spo2!==undefined)document.getElementById("spo2").textContent=d.spo2;
+  if(d.nibp){
+    const map=Math.round((Number(d.nibp.sys)+2*Number(d.nibp.dia))/3);
+    document.getElementById("bp").innerHTML=`${d.nibp.sys}/${d.nibp.dia} <small style="font-size:17px"> (${map})</small>`;
+  }
+  if(d.etco2!==undefined)document.getElementById("etco2").textContent=d.etco2;
+  if(d.rr!==undefined)document.getElementById("rr").textContent=d.rr;
+  if(d.temp!==undefined)document.getElementById("temp").textContent=Number(d.temp).toFixed(1);
+}
+function applyMonitorRhythm(d){
+  activeRhythm=d.rhythm||"nsr";
+  const rate=Math.max(0,Number(d.rate)||0);
+  HR=rate;period=rate>0?60/rate:1e9;buildRhythmEvents();
+  document.getElementById("hr").textContent=activeRhythm==="asystole"?0:rate;
+  document.getElementById("rhythmText").textContent=(d.rhythm||"").replaceAll("_"," ").toUpperCase()+" · "+rate+" bpm";
+}
+function applyMonitorTherapy(d){
+  document.getElementById("therapyText").textContent=`THERAPY: ${d.mode||"—"} · ${d.status||"—"} · ${d.energy??"—"} J`;
+}
+function applyMonitorECG(d){
+  document.getElementById("ecgText").textContent=`12-LEAD: ${d.patternLabel||d.pattern||"Captured"}${d.patientId?" · "+d.patientId:""}`;
+}
+document.getElementById("createRoom").addEventListener("click",createRoom);
+document.getElementById("copyPin").addEventListener("click",async()=>{
+  if(!monitorPin)return;
+  try{await navigator.clipboard.writeText(monitorPin);setRoomStatus("คัดลอก PIN "+monitorPin+" แล้ว")}
+  catch(e){setRoomStatus("PIN ห้องของคุณคือ "+monitorPin)}
+});
+document.getElementById("closeRoom").addEventListener("click",async()=>{
+  if(!monitorRoom||!monitorPin)return;
+  if(!confirm("ยืนยันปิดห้อง "+monitorPin+"? ผู้ควบคุมจะไม่สามารถเข้าห้องนี้ได้อีก"))return;
+  try{
+    await monitorRoom.child("roomInfo").update({status:"closed",closedAt:firebase.database.ServerValue.TIMESTAMP});
+    if(monitorStateListener)monitorRoom.child("state").off("value",monitorStateListener);
+    document.getElementById("closeRoom").disabled=true;
+    setRoomStatus("ปิดห้อง "+monitorPin+" แล้ว");
+  }catch(err){setRoomStatus("ปิดห้องไม่สำเร็จ: "+err.message)}
+});
+
+</script>
+</body>
+</html>
