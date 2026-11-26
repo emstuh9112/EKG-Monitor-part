@@ -6,53 +6,119 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<title>EMS Monitor – Simulation</title>
+<title>EMS Monitor – Simulation v4.9.2</title>
 <style>
-:root{--bg:#050a0b;--panel:#071112;--grid:#17302d;--green:#35ff78;--cyan:#37e7ef;--yellow:#ffe45c;--white:#e9f4f1;--muted:#8da6a0;--red:#ff5757}
+:root{--bg:#050a0b;--panel:#071112;--grid:#17302d;--green:#35ff78;--cyan:#37e7ef;--yellow:#ffe45c;--white:#e9f4f1;--muted:#8da6a0;--red:#ff5757;--orange:#ff9f43}
 *{box-sizing:border-box}
-body{margin:0;background:#10191b;color:var(--white);font-family:Arial,"Tahoma",sans-serif;min-height:100vh;padding:14px}
-.monitor{width:min(1500px,100%);background:#111b1d;border:2px solid #435357;border-radius:18px;padding:14px;box-shadow:0 20px 60px #0009}
-.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:3px 5px 12px;flex-wrap:wrap}
-.brand{font-weight:800;letter-spacing:1.5px;font-size:clamp(16px,2vw,23px)}
+body{margin:0;background:#10191b;color:var(--white);font-family:Arial,"Tahoma",sans-serif;min-height:100vh;padding:12px}
+.monitor{width:min(1500px,100%);background:#111b1d;border:2px solid #435357;border-radius:18px;padding:12px;box-shadow:0 20px 60px #0009}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:2px 4px 10px;flex-wrap:wrap}
+.brand{font-weight:800;letter-spacing:1.5px;font-size:clamp(16px,2vw,22px)}
 .brand span{color:var(--green)}
 .status{display:flex;gap:14px;align-items:center;color:#b7c9c5;font-size:12px}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px;box-shadow:0 0 8px var(--green)}
-.controls{display:flex;gap:8px;flex-wrap:wrap}
-button{border:1px solid #53696b;background:#263638;color:#f2f7f5;padding:9px 13px;border-radius:7px;font-weight:700;cursor:pointer}
-button:hover{background:#35494b}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.amp-group{display:inline-flex;align-items:center;gap:4px;background:#192527;border:1px solid #3c5052;border-radius:7px;padding:3px 6px;font-size:11px;color:#b7c9c5}
+button{border:1px solid #53696b;background:#263638;color:#f2f7f5;padding:7px 11px;border-radius:7px;font-weight:700;cursor:pointer}
+.amp-group button{padding:4px 8px;font-size:11px;border-radius:5px}
+button:hover:not(:disabled){background:#35494b}
+button:disabled{opacity:.42;cursor:not-allowed}
 button.active{border-color:var(--green);color:var(--green)}
-.screen{background:var(--bg);border:2px solid #263b3a;border-radius:8px;padding:10px;display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:10px;min-height:560px}
-.wave-area{display:flex;flex-direction:column;gap:7px;min-width:0}
-.wave-row{position:relative;height:clamp(105px,17vh,150px);background-color:#03090a;border:1px solid #172c2a;overflow:hidden;border-radius:3px}
+.screen{position:relative;background:var(--bg);border:2px solid #263b3a;border-radius:8px;padding:8px;display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:8px;height:min(74vh,640px);min-height:480px}
+.wave-area{display:flex;flex-direction:column;gap:6px;min-width:0;height:100%}
+.wave-row{position:relative;flex:1;min-height:0;background-color:#03090a;border:1px solid #172c2a;overflow:hidden;border-radius:3px}
+.wave-row.ecg-primary{z-index:25}
 .wave-row canvas{width:100%;height:100%;display:block}
-.wave-label{position:absolute;top:7px;left:9px;z-index:2;font-size:13px;font-weight:800;text-shadow:0 1px 4px #000}
-.wave-scale{position:absolute;right:8px;top:7px;font-size:10px;color:#6c8980}
-.values{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,1fr);gap:8px;min-width:0}
-.value{background:#03090a;border:1px solid #1b302f;border-radius:4px;padding:10px 9px;display:flex;flex-direction:column;justify-content:space-between;min-height:105px}
-.value .label{font-size:13px;font-weight:800;letter-spacing:.5px}
-.value .number{font-size:clamp(34px,5vw,58px);font-weight:700;line-height:1;letter-spacing:-2px}
-.value .unit{font-size:11px;color:#9ab0aa}
-.green{color:var(--green)}.cyan{color:var(--cyan)}.yellow{color:var(--yellow)}.white{color:var(--white)}
-.bp{grid-column:span 2;min-height:110px}
-.bp .number{font-size:clamp(32px,4.5vw,52px)}
-.footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#8da6a0;font-size:11px;padding:10px 4px 0}
+.wave-label{position:absolute;top:6px;left:8px;z-index:2;font-size:12px;font-weight:800;text-shadow:0 1px 4px #000}
+.wave-scale{position:absolute;right:8px;top:6px;z-index:2;font-size:10px;color:#6c8980}
+.values{position:relative;z-index:5;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,minmax(0,1fr));gap:6px;min-width:0;height:100%}
+.value{background:#03090a;border:1px solid #1b302f;border-radius:4px;padding:8px 8px;display:flex;flex-direction:column;justify-content:space-between;min-height:0}
+.value .label{font-size:12px;font-weight:800;letter-spacing:.5px}
+.value .number{font-size:clamp(28px,3.8vw,50px);font-weight:700;line-height:1;letter-spacing:-1.5px}
+.value .unit{font-size:10px;color:#9ab0aa}
+.green{color:var(--green)}.cyan{color:var(--cyan)}.yellow{color:var(--yellow)}.white{color:var(--white)}.red{color:var(--red)}.orange{color:var(--orange)}
+.bp{grid-column:span 2}
+.bp .number{font-size:clamp(26px,3.5vw,44px)}
+
+/* Defibrillator & Pacing overlay panels */
+.defib-panel, .pacing-panel{display:none;position:absolute;left:8px;right:8px;top:35%;bottom:8px;z-index:15;background:rgba(7,18,22,.96);border:2px solid #3c6b70;border-radius:10px;padding:12px 14px;box-shadow:0 12px 34px #000c;flex-direction:column;justify-content:space-between;gap:10px}
+.defib-panel.show, .pacing-panel.show{display:flex}
+.pacing-panel{border-color:#42e3a2}
+.defib-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid #223c42;padding-bottom:6px}
+.defib-title{font-size:15px;font-weight:800;letter-spacing:.8px;color:#55d8e8;display:flex;align-items:center;gap:10px}
+.sync-pill{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid #53696b;color:#b7c9c5;background:#132328}
+.sync-pill.on{border-color:#ffe45c;color:#ffe45c;background:#372f0d}
+.aed-pill{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid #42e3a2;color:#42e3a2;background:#0b291e}
+.defib-body{display:grid;grid-template-columns:1.1fr 1.2fr 1.4fr;gap:12px;align-items:center}
+.energy-box{background:#040d10;border:1px solid #233e44;border-radius:8px;padding:8px 10px}
+.energy-box label{display:block;font-size:11px;color:#9cb8be;margin-bottom:4px}
+.energy-select{width:100%;background:#0a1b20;color:#ffe45c;border:1px solid #476c73;border-radius:6px;padding:6px 8px;font-size:14px;font-weight:800}
+.charge-meter{background:#040d10;border:1px solid #233e44;border-radius:8px;padding:8px 12px;display:flex;flex-direction:column;gap:5px}
+.charge-top{display:flex;justify-content:space-between;align-items:baseline}
+.charge-num{font-size:28px;font-weight:900;color:#ffe45c;line-height:1}
+.charge-target{font-size:11px;color:#9cb8be}
+.bar-bg{width:100%;height:12px;background:#102227;border-radius:999px;overflow:hidden;border:1px solid #2a474e}
+.bar-fill{height:100%;width:0%;background:linear-gradient(90deg,#37e7ef,#ffe45c,#ff5757);transition:width .08s linear}
+.defib-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.btn-charge{background:#8a5a12;border-color:#ffb84d;color:#fff5dc}
+.btn-charge:hover:not(:disabled){background:#a86e16}
+.btn-sync{background:#183344;border-color:#55d8e8;color:#aef5ff}
+.btn-sync.active{background:#3b310c;border-color:#ffe45c;color:#ffe45c}
+.btn-aed{background:#123b2c;border-color:#42e3a2;color:#b4ffe0}
+.btn-shock{background:#7e1d24;border-color:#ff6b75;color:#fff;font-size:14px;padding:8px 14px}
+.btn-shock:hover:not(:disabled){background:#a3242d}
+.defib-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:11px;color:#c3d8dd;background:#051013;border:1px solid #1e353b;border-radius:7px;padding:6px 10px}
+
+.pacing-body{display:grid;grid-template-columns:1fr 1.15fr 1.15fr 1.2fr;gap:10px;align-items:stretch}
+.pace-card{background:#040d10;border:1px solid #233e44;border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;justify-content:space-between;gap:6px}
+.pace-card label{font-size:10px;color:#9cb8be;font-weight:700;letter-spacing:.4px}
+.pace-mode-btns{display:flex;flex-direction:column;gap:5px}
+.btn-pmode{background:#12252b;border-color:#3a5b63;color:#b8d2ca;padding:6px 8px;font-size:12px;text-align:center}
+.btn-pmode.active{background:#0f3a2c;border-color:#42e3a2;color:#42e3a2;box-shadow:0 0 10px #42e3a233}
+.pace-dial{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.pace-val{font-size:28px;font-weight:900;line-height:1;color:#42e3a2}
+.pace-val.ma{color:#ffe45c}
+.pace-unit{font-size:11px;color:#9cb8be}
+.step-btns{display:flex;gap:5px}
+.step-btns button{padding:5px 10px;font-size:14px;background:#193036;border-color:#476c73}
+.btn-pace-toggle{width:100%;height:100%;min-height:60px;font-size:14px;background:#114231;border-color:#42e3a2;color:#b9ffe2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.btn-pace-toggle.running{background:#7e1d24;border-color:#ff6b75;color:#fff}
+.pace-pulse-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#395257;margin-right:6px;vertical-align:middle;transition:background .06s,box-shadow .06s}
+.pace-pulse-dot.flash{background:#42e3a2;box-shadow:0 0 12px #42e3a2}
+
+/* Full-Screen 12-Lead Overlay (Blind / Unlabeled diagnosis for learners) */
+.ecg12-fullscreen{display:none;position:absolute;inset:0;z-index:40;background:#fff5f7;color:#14222c;border-radius:6px;padding:6px 10px;flex-direction:column;justify-content:space-between;overflow:hidden;width:100%;height:100%}
+.ecg12-fullscreen.show{display:flex}
+.ecg12-top{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;gap:8px;padding-bottom:4px;border-bottom:1.5px solid #e09aa5;font-size:12px;line-height:1.2}
+.ecg12-top b{color:#0f172a}
+.ecg12-close{background:#7e1d24;border-color:#ff6b75;color:#fff;padding:3px 10px;font-size:11px;border-radius:5px}
+.ecg12-paper{flex:1 1 auto;min-height:0;margin-top:4px;background-color:#fff5f7;background-image:linear-gradient(to right,rgba(232,120,136,.24) 1px,transparent 1px),linear-gradient(to bottom,rgba(232,120,136,.24) 1px,transparent 1px),linear-gradient(to right,rgba(214,76,96,.52) 1.2px,transparent 1.2px),linear-gradient(to bottom,rgba(214,76,96,.52) 1.2px,transparent 1.2px);background-size:5px 5px,5px 5px,25px 25px,25px 25px;border:1.5px solid #d46a7a;border-radius:4px;padding:2px 6px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.ecg12-cols{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:0 10px;overflow:hidden}
+.ecg12-col{display:flex;flex-direction:column;height:100%;min-height:0;overflow:hidden}
+.ecg12-col.right{border-left:1.5px solid rgba(180,55,75,.58);padding-left:6px}
+.ecg12-cell{position:relative;flex:1 1 0;min-height:0;border-bottom:1px dashed rgba(214,76,96,.25);overflow:hidden;display:flex;align-items:center}
+.ecg12-cell:last-child{border-bottom:0}
+.ecg12-lead{position:absolute;top:1px;left:3px;z-index:2;font-size:10.5px;line-height:1.1;font-weight:800;color:#111827;background:rgba(255,255,255,.78);padding:0 3px;border-radius:2px}
+.ecg12-cell svg{width:100%;height:100%;max-height:100%;display:block}
+.ecg12-bottom{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;font-size:10px;line-height:1.2;font-weight:800;color:#1e293b;padding:2px 2px 1px}
+
+.scenario-bar{display:flex;gap:14px;flex-wrap:wrap;background:#091516;border:1px solid #263b3a;border-radius:5px;padding:7px 10px;margin-top:8px;font-size:11px;color:#b8d2ca}
+.scenario-bar.hidden-for-12lead{display:none}
+.footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#8da6a0;font-size:11px;padding:8px 4px 0}
 .notice{color:#ffc95a;font-weight:700}
 .shell{width:min(1500px,100%);margin:0 auto}
-.room-panel{background:#142326;border:1px solid #40595b;border-radius:12px;padding:13px 15px;margin:0 auto 12px;color:#e9f4f1}
+.room-panel{background:#142326;border:1px solid #40595b;border-radius:12px;padding:12px 14px;margin:0 auto 10px;color:#e9f4f1}
 .room-panel h2{font-size:16px;margin:0 0 6px}
-.room-help{font-size:12px;color:#a9c1bb;margin:0 0 10px}
-.firebase-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
-.firebase-grid label{display:block;font-size:10px;color:#a9c1bb;margin-bottom:4px}
-.firebase-grid input{width:100%;min-width:0;padding:8px;border-radius:6px;border:1px solid #52696b;background:#071416;color:#fff}
-.room-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
-.pin-line{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:8px}
-.pin-number{font-size:34px;letter-spacing:8px;font-weight:900;color:#ffe45c;min-width:170px}
+.room-help{font-size:12px;color:#a9c1bb;margin:0 0 8px}
+.room-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.pin-line{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:6px}
+.pin-number{font-size:32px;letter-spacing:8px;font-weight:900;color:#ffe45c;min-width:170px}
 .room-status{font-size:12px;color:#b7c9c5}
-.credit{font-size:10px;color:#81928f;text-align:center;padding:9px 0 2px;letter-spacing:.2px}
-@media(max-width:850px){.firebase-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:480px){body{padding:6px}.room-panel{padding:10px}.pin-number{font-size:29px}}
-@media(max-width:760px){body{padding:5px}.monitor{padding:8px;border-radius:10px}.screen{grid-template-columns:1fr;min-height:0;padding:6px}.wave-row{height:105px}.values{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto}.value{min-height:95px}.bp{grid-column:span 2}.value .number{font-size:42px}.topbar{padding-bottom:8px}.status{font-size:10px}}
-@media(max-width:380px){.value .number{font-size:34px}.value{padding:8px 6px}.label{font-size:11px!important}}
+.credit{font-size:10px;color:#81928f;text-align:center;padding:8px 0 2px;letter-spacing:.2px}
+@media(max-width:960px){.defib-body,.pacing-body{grid-template-columns:1fr}.defib-panel,.pacing-panel{top:35%}}
+@media(max-width:760px){body{padding:5px}.monitor{padding:8px;border-radius:10px}.screen{grid-template-columns:1fr;height:auto;min-height:540px;padding:6px}.wave-area{height:315px}.values{height:auto;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto}.value{min-height:84px}.bp{grid-column:span 2}.value .number{font-size:36px}.topbar{padding-bottom:8px}.status{font-size:10px}.ecg12-cols{grid-template-columns:1fr 1fr}.ecg12-lead{font-size:9.5px}}
+@media(max-width:480px){body{padding:6px}.room-panel{padding:10px}.pin-number{font-size:28px}}
+@media(max-width:380px){.value .number{font-size:30px}.value{padding:7px 6px}.label{font-size:11px!important}}
 </style>
 </head>
 <body>
@@ -72,109 +138,922 @@ button.active{border-color:var(--green);color:var(--green)}
     <div class="brand">EMS <span>THAMMASAT</span> | PATIENT MONITOR</div>
     <div class="status"><span><i class="dot"></i>MONITORING</span><span>SIMULATION MODE</span><span id="clock">--:--:--</span></div>
     <div class="controls">
+      <div class="amp-group">
+        <span>EKG Amp:</span>
+        <button type="button" data-amp="0.5">0.5x</button>
+        <button type="button" data-amp="1" class="active">1.0x</button>
+        <button type="button" data-amp="1.5">1.5x</button>
+        <button type="button" data-amp="2">2.0x</button>
+      </div>
       <button id="soundBtn" class="active">♫ เสียง HR: ON</button>
       <button id="pauseBtn">Ⅱ หยุดคลื่น</button>
       <button id="fullBtn">⛶ เต็มจอ</button>
     </div>
   </header>
-  <section class="screen">
+  <section class="screen" id="monitorScreen">
     <div class="wave-area">
-      <div class="wave-row"><div class="wave-label green">Ⅱ  ECG</div><div class="wave-scale">25 mm/s · 10 mm/mV</div><canvas id="ecg"></canvas></div>
+      <div class="wave-row ecg-primary" id="ecgWaveRow"><div class="wave-label green">Ⅱ  ECG</div><div class="wave-scale" id="ecgScaleLabel">25 mm/s · 10 mm/mV (1.0x)</div><canvas id="ecg"></canvas></div>
       <div class="wave-row"><div class="wave-label cyan">PLETH · SpO₂</div><div class="wave-scale">Plethysmograph</div><canvas id="pleth"></canvas></div>
       <div class="wave-row"><div class="wave-label yellow">CO₂ · EtCO₂</div><div class="wave-scale">Capnography</div><canvas id="capno"></canvas></div>
     </div>
     <aside class="values">
       <div class="value"><div class="label green">HR</div><div class="number green" id="hr">75</div><div class="unit">bpm · ECG</div></div>
       <div class="value"><div class="label cyan">SpO₂</div><div class="number cyan" id="spo2">98</div><div class="unit">%</div></div>
-      <div class="value bp"><div class="label white">NIBP</div><div class="number white" id="bp">120/80 <small style="font-size:17px"> (93)</small></div><div class="unit">mmHg · SYS / DIA (MAP)</div></div>
+      <div class="value bp"><div class="label white">NIBP</div><div class="number white" id="bp">120/80 <small style="font-size:15px"> (93)</small></div><div class="unit">mmHg · SYS / DIA (MAP)</div></div>
       <div class="value"><div class="label yellow">EtCO₂</div><div class="number yellow" id="etco2">38</div><div class="unit">mmHg</div></div>
       <div class="value"><div class="label green">RR</div><div class="number green" id="rr">16</div><div class="unit">breaths/min</div></div>
       <div class="value"><div class="label white">TEMP</div><div class="number white" id="temp">36.8</div><div class="unit">°C</div></div>
-      <div class="value"><div class="label white">ECG LEAD</div><div class="number white" style="font-size:30px">II</div><div class="unit">Lead selected</div></div>
+      <div class="value"><div class="label white">ECG LEAD</div><div class="number white" style="font-size:26px">II</div><div class="unit">Lead selected</div></div>
     </aside>
+
+    <!-- Defibrillator Overlay Panel -->
+    <div class="defib-panel" id="defibPanel">
+      <div class="defib-head">
+        <div class="defib-title">
+          <span id="defibModeLabel">MANUAL DEFIBRILLATION</span>
+          <span class="sync-pill" id="syncBadge">SYNC: OFF</span>
+          <span class="aed-pill" id="aedBadge" style="display:none">AED ADVISORY</span>
+        </div>
+        <div id="defibStatusText" style="font-size:12px;font-weight:700;color:#ffe45c">READY · SELECT ENERGY OR CHARGE</div>
+      </div>
+      <div class="defib-body">
+        <div class="energy-box">
+          <label for="defibEnergySelect">SELECT ENERGY (JOULES)</label>
+          <select class="energy-select" id="defibEnergySelect">
+            <option value="50">50 J</option>
+            <option value="100">100 J</option>
+            <option value="120">120 J</option>
+            <option value="150">150 J</option>
+            <option value="200" selected>200 J</option>
+            <option value="300">300 J</option>
+            <option value="360">360 J</option>
+          </select>
+        </div>
+        <div class="charge-meter">
+          <div class="charge-top">
+            <span class="charge-num"><span id="chargedValue">0</span> <small style="font-size:14px">J</small></span>
+            <span class="charge-target">TARGET: <b id="targetEnergyLabel">200</b> J</span>
+          </div>
+          <div class="bar-bg"><div class="bar-fill" id="chargeBar"></div></div>
+        </div>
+        <div class="defib-actions">
+          <button type="button" class="btn-charge" id="btnCharge">⚡ ชาร์ต (CHARGE)</button>
+          <button type="button" class="btn-sync" id="btnSync">⇄ SYNC</button>
+          <button type="button" class="btn-aed" id="btnAed">🩺 AED MODE</button>
+          <button type="button" class="btn-shock" id="btnShock" disabled>⚡ SHOCK</button>
+        </div>
+      </div>
+      <div class="defib-foot">
+        <span id="defibAdvisoryMsg">โหมด Manual Defib พร้อมใช้งาน — กดชาร์ตให้เต็มก่อนกด SHOCK</span>
+        <span id="defibLastAction">Last action: —</span>
+      </div>
+    </div>
+
+    <!-- Transcutaneous Pacing Overlay Panel -->
+    <div class="pacing-panel" id="pacingPanel">
+      <div class="defib-head">
+        <div class="defib-title" style="color:#42e3a2">
+          <span><i class="pace-pulse-dot" id="pacePulseDot"></i>TRANSCUTANEOUS PACING</span>
+          <span class="aed-pill" id="paceModeBadge">MODE: DEMAND</span>
+        </div>
+        <div id="paceStatusText" style="font-size:12px;font-weight:700;color:#ffe45c">STANDBY · SET RATE &amp; OUTPUT (mA)</div>
+      </div>
+      <div class="pacing-body">
+        <div class="pace-card">
+          <label>PACING MODE</label>
+          <div class="pace-mode-btns">
+            <button type="button" class="btn-pmode active" id="btnPaceDemand">DEMAND MODE</button>
+            <button type="button" class="btn-pmode" id="btnPaceFixed">FIXED MODE</button>
+          </div>
+        </div>
+        <div class="pace-card">
+          <label>PACING RATE (ppm)</label>
+          <div class="pace-dial">
+            <div><span class="pace-val" id="uiPaceRate">70</span> <span class="pace-unit">ppm</span></div>
+            <div class="step-btns">
+              <button type="button" id="btnPaceRateDown">−</button>
+              <button type="button" id="btnPaceRateUp">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="pace-card">
+          <label>OUTPUT / ENERGY (mA)</label>
+          <div class="pace-dial">
+            <div><span class="pace-val ma" id="uiPaceMa">60</span> <span class="pace-unit">mA</span></div>
+            <div class="step-btns">
+              <button type="button" id="btnPaceMaDown">−</button>
+              <button type="button" id="btnPaceMaUp">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="pace-card" style="padding:6px">
+          <button type="button" class="btn-pace-toggle" id="btnPaceStartStop">
+            <span id="paceBtnMainText">▶ START PACING</span>
+            <small id="paceBtnSubText" style="font-size:11px;opacity:.85">กดเพื่อเริ่มปล่อยกระตุ้น</small>
+          </button>
+        </div>
+      </div>
+      <div class="defib-foot">
+        <span id="paceAdvisoryMsg">โหมดจำลอง Transcutaneous Pacing (รูปคลื่น ECG ด้านบนยึดตามค่าหลักจาก Part Control)</span>
+        <span id="paceLastAction">Last action: Standby</span>
+      </div>
+    </div>
+
+    <!-- Full-Screen 12-Lead Overlay (No answer clues shown to learners) -->
+    <div class="ecg12-fullscreen" id="ecg12Overlay">
+      <div class="ecg12-top">
+        <div><b>12-LEAD ECG</b> · Rate: <b id="ovRate">75</b> bpm</div>
+        <button type="button" class="ecg12-close" id="btnClose12Overlay">✕ ปิด 12-Lead</button>
+      </div>
+      <div class="ecg12-paper">
+        <div class="ecg12-cols">
+          <div class="ecg12-col" id="ovColLeft"></div>
+          <div class="ecg12-col right" id="ovColRight"></div>
+        </div>
+        <div class="ecg12-bottom">
+          <span>SIMULATION / TRAINING ONLY</span>
+          <span>25 mm/sec &nbsp;&nbsp;&nbsp; 10 mm/mV</span>
+        </div>
+      </div>
+    </div>
   </section>
-  <div id="liveScenario" style="display:flex;gap:14px;flex-wrap:wrap;background:#091516;border:1px solid #263b3a;border-radius:5px;padding:8px 10px;margin-top:8px;font-size:11px;color:#b8d2ca">
-    <span>RHYTHM: <b id="rhythmText">NSR</b></span><span id="therapyText">THERAPY: —</span><span id="ecgText">12-LEAD: —</span>
+  <div id="liveScenario" class="scenario-bar">
+    <span>RHYTHM: <b id="rhythmText">NSR · 75 bpm · PULSE</b></span>
+    <span id="therapyText">THERAPY: —</span>
+    <span id="ecgText">12-LEAD: —</span>
   </div>
   <footer class="footer"><span>Patient: SIMULATION · Adult</span><span class="notice">FOR TRAINING / SIMULATION ONLY — NOT FOR CLINICAL USE</span><span>EMS THAMMASAT</span></footer>
 </main>
 <div class="credit">Wittaya Pholoung : ENP Thammasat</div>
 </div>
 <script>
-let HR=75, period=60/HR, activeRhythm="nsr";
+let HR=75, period=60/HR, activeRhythm="nsr", pulseStatus="present", ecgAmpScale=1.0;
 let paused=false,soundOn=true, audioCtx=null,lastBeat=-1,start=performance.now(),rhythmEvents=[];
 const colors={ecg:'#35ff78',pleth:'#37e7ef',capno:'#ffe45c'};
 function setupCanvas(id){const c=document.getElementById(id),ctx=c.getContext('2d');function resize(){const r=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;c.width=Math.max(1,Math.floor(r.width*dpr));c.height=Math.max(1,Math.floor(r.height*dpr));ctx.setTransform(dpr,0,0,dpr,0,0)}resize();new ResizeObserver(resize).observe(c);return {c,ctx}}
 const canvases={ecg:setupCanvas('ecg'),pleth:setupCanvas('pleth'),capno:setupCanvas('capno')};
-function gauss(x,m,s){return Math.exp(-Math.pow((x-m)/s,2)/2)}
-function seeded(n){const x=Math.sin(n*127.1+activeRhythm.length*31.7)*43758.5453;return x-Math.floor(x)}
-function buildRhythmEvents(){
-  rhythmEvents=[];lastBeat=-1;const rate=Math.max(20,Math.min(300,HR||75)),base=60/rate;let t=-12,n=0;
-  while(t<3600){let rr=base,kind='normal';
-    if(activeRhythm==='af'||activeRhythm==='af_rvr'||activeRhythm==='af_slow')rr=base*(.58+seeded(n+2)*.84);
-    if(activeRhythm==='sinus_arrhythmia')rr=base*(.82+.36*Math.sin(n*1.7));
-    if(activeRhythm==='sinus_pause'&&n%7===5)rr=base*2.8;
-    if(activeRhythm==='pac'&&n%4===2)rr=base*.62;
-    if((activeRhythm==='bigeminy'&&n%2===1)||(activeRhythm==='trigeminy'&&n%3===2)||(activeRhythm==='pvc'&&n%5===3)){rr=base*.58;kind='pvc'}
-    if(activeRhythm==='mobitz1'&&n%4===3)kind='dropped';
-    if(activeRhythm==='mobitz2'&&n%3===2)kind='dropped';
-    if(activeRhythm==='junctional'||activeRhythm==='junctional_brady'||activeRhythm==='junctional_accel'||activeRhythm==='junctional_tachy')kind='junctional';
-    if(['idioventricular','aivr','vt_mono','vt_poly','torsades'].includes(activeRhythm))kind='wide';
-    if(activeRhythm==='paced_v'||activeRhythm==='paced_dual')kind='paced';
-    if(activeRhythm==='paced_a')kind='atrial_paced';
-    if(activeRhythm==='av3')kind='wide';
-    if(activeRhythm==='artifact')kind='artifact';
-    if(activeRhythm!=='asystole'&&activeRhythm!=='vf')rhythmEvents.push({t,kind:kind==='dropped'?'blocked_p':kind,n});
-    t+=Math.max(.18,rr);n++;
+
+function setEkgAmplitude(scale){
+  const val = Math.max(0.25, Math.min(3.0, Number(scale) || 1.0));
+  ecgAmpScale = val;
+  document.querySelectorAll('[data-amp]').forEach(btn=>{
+    const bVal = Number(btn.dataset.amp);
+    btn.classList.toggle('active', Math.abs(bVal - val) < 0.01);
+  });
+  const mmPerMv = (10 * val).toFixed(val % 1 === 0 ? 0 : 1);
+  const label = val % 1 === 0 ? val.toFixed(1) : String(val);
+  document.getElementById('ecgScaleLabel').textContent = `25 mm/s · ${mmPerMv} mm/mV (${label}x)`;
+}
+document.querySelectorAll('[data-amp]').forEach(btn=>{
+  btn.addEventListener('click', ()=>setEkgAmplitude(Number(btn.dataset.amp)));
+});
+
+/* Defibrillator Sound & Speech Controller */
+let chargeOsc = null, chargeGain = null, chargeFreqTimer = null, chargeInterval = null, readyAlarmTimer = null;
+let targetEnergy = 200, chargedEnergy = 0, isCharging = false, isChargedReady = false, isSyncMode = false, isAedShockSequence = false;
+
+function ensureAudio(){
+  audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function stopReadyAlarm(){
+  if(readyAlarmTimer){ clearInterval(readyAlarmTimer); readyAlarmTimer = null; }
+}
+
+function startReadyAlarm(){
+  stopReadyAlarm();
+  const triggerTone = ()=>{
+    if(!isChargedReady) return;
+    try{
+      const ctx = ensureAudio();
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(1180, ctx.currentTime);
+      g.gain.setValueAtTime(0.0001, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.09, ctx.currentTime + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.14);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(); o.stop(ctx.currentTime + 0.15);
+    }catch(e){}
+  };
+  triggerTone();
+  readyAlarmTimer = setInterval(triggerTone, 180);
+}
+
+function startChargeSound(){
+  stopChargeSound();
+  stopReadyAlarm();
+  try{
+    const ctx = ensureAudio();
+    chargeOsc = ctx.createOscillator();
+    chargeGain = ctx.createGain();
+    chargeOsc.type = 'sawtooth';
+    chargeOsc.frequency.setValueAtTime(220, ctx.currentTime);
+    chargeGain.gain.setValueAtTime(0.035, ctx.currentTime);
+    chargeOsc.connect(chargeGain);
+    chargeGain.connect(ctx.destination);
+    chargeOsc.start();
+    let f = 220;
+    chargeFreqTimer = setInterval(()=>{
+      if(!chargeOsc || !audioCtx) return;
+      f = Math.min(920, f + 45);
+      chargeOsc.frequency.setTargetAtTime(f, audioCtx.currentTime, 0.05);
+    }, 120);
+  }catch(e){}
+}
+
+function stopChargeSound(){
+  if(chargeFreqTimer){ clearInterval(chargeFreqTimer); chargeFreqTimer = null; }
+  if(chargeInterval){ clearInterval(chargeInterval); chargeInterval = null; }
+  try{
+    if(chargeOsc){ chargeOsc.stop(); chargeOsc.disconnect(); chargeOsc = null; }
+    if(chargeGain){ chargeGain.disconnect(); chargeGain = null; }
+  }catch(e){}
+}
+
+function stopAllDefibSound(){
+  stopChargeSound();
+  stopReadyAlarm();
+}
+
+function playShockTone(){
+  try{
+    const ctx = ensureAudio();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'square';
+    o.frequency.setValueAtTime(160, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(55, ctx.currentTime + 0.22);
+    g.gain.setValueAtTime(0.18, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.24);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime + 0.25);
+  }catch(e){}
+}
+
+function speakEnglish(text, onDone = null){
+  try{
+    if(!('speechSynthesis' in window)){ if(onDone) onDone(); return; }
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'en-US';
+    utter.rate = 1.0;
+    utter.pitch = 1.0;
+    if(onDone) utter.onend = onDone;
+    window.speechSynthesis.speak(utter);
+  }catch(e){
+    if(onDone) onDone();
   }
 }
-function ecgWave(p){return 0;}
-function ecgValueAt(sec){
-  const r=activeRhythm;
-  if(r==='asystole')return .004*Math.sin(sec*5.1)+.002*Math.sin(sec*11.7);
-  if(r==='vf')return .27*Math.sin(sec*37+Math.sin(sec*8)*2)+.16*Math.sin(sec*61+1.4)+.10*Math.sin(sec*93+Math.sin(sec*13))+ .06*Math.sin(sec*17);
-  if(r==='torsades'||r==='vt_poly'){const twist=Math.sin(sec*2.7);return (.40+.27*Math.sin(sec*1.8))*Math.sin(sec*31+Math.sin(sec*3)*2.4)+.13*Math.sin(sec*57+twist*2)}
-  let y=0;
-  if(r==='af'||r==='af_rvr'||r==='af_slow')y=.035*Math.sin(sec*31+Math.sin(sec*7)*2)+.022*Math.sin(sec*47+1.3)+.012*Math.sin(sec*19);
-  if(r==='flutter')y+=.085*(2/Math.PI)*Math.asin(Math.sin(2*Math.PI*5.0*sec));
-  if(r==='mat')y+=.008*Math.sin(sec*21);
-  if(r==='artifact')y+=.13*Math.sin(sec*17)+.07*Math.sin(sec*39)+.035*Math.sin(sec*71);
-  let lo=0,hi=rhythmEvents.length;while(lo<hi){const mid=(lo+hi)>>1;if(rhythmEvents[mid].t<=sec)lo=mid+1;else hi=mid;}
-  for(let i=lo-1;i>=0;i--){const e=rhythmEvents[i],d=sec-e.t;if(d>.72)break;
-    if(e.kind==='blocked_p'){y+=.13*gauss(d,-.18,.035)}
-    else if(e.kind==='pvc'||e.kind==='wide'){
-      const width=(r==='vt_mono'||r==='vt_poly'||r==='torsades') ? .095 : .075;
-      y+=-.24*gauss(d,-.045,width*.65)+.92*gauss(d,.015,width)+-.38*gauss(d,.105,width*1.2)+.18*gauss(d,.31,.12);
-    }else if(e.kind==='paced'||e.kind==='atrial_paced'){
-      if(e.kind==='atrial_paced'){y+=.95*gauss(d,-.18,.003)+.14*gauss(d,-.13,.035)-.16*gauss(d,-.035,.012)+.95*gauss(d,0,.012)-.25*gauss(d,.04,.018)+.25*gauss(d,.27,.08)}
-      else {y+=.95*gauss(d,-.012,.003)-.22*gauss(d,.018,.004);if(r==='paced_dual')y+=.95*gauss(d,-.19,.003)+.13*gauss(d,-.14,.035);y+=-.20*gauss(d,.025,.012)+.95*gauss(d,.065,.035)-.30*gauss(d,.12,.03)+.22*gauss(d,.34,.10)}
-    }else if(e.kind==='junctional'){
-      y+=-.13*gauss(d,-.025,.012)+.95*gauss(d,0,.012)-.25*gauss(d,.035,.018)+.24*gauss(d,.25,.075)-.12*gauss(d,.11,.025);
-    }else{
-      const noP=['af','af_rvr','af_slow','flutter','svt','vt_mono','vt_poly','torsades','idioventricular','aivr','av3'].includes(r);
-      if(!noP){let pAmp=.13,pTime=-.18;if(r==='atrial_tachy'){pAmp=-.14;pTime=-.16}if(r==='av1')pTime=-.27;if(r==='pac'&&e.n%4===2){pAmp=-.12;pTime=-.12}if(r==='mat'){pAmp=[.13,-.11,.20][e.n%3];pTime=-.18+((e.n%3)-1)*.025}if(r==='mobitz1')pTime=-(.18+.035*(e.n%3));if(r==='mobitz2')pTime=-.18;y+=pAmp*gauss(d,pTime,.035)}
 
-      let qrs=.012,amp=1;
-      if(r==='rbbb'||r==='lbbb'||r==='bifascicular')qrs=.035;
-      if(r==='vt_poly')amp=.65+.45*seeded(e.n+19);
-      if(r==='torsades')amp=.25+.85*(.5+.5*Math.sin(e.n*.72));
-      y+=-.16*gauss(d,-.035,qrs*.8)+amp*gauss(d,0,qrs)-.28*gauss(d,.045,qrs*1.2);
-      if(r==='rbbb'||r==='bifascicular')y+=.20*gauss(d,.085,.025)-.20*gauss(d,.29,.07);
-      else if(r==='lbbb')y+=.32*gauss(d,.09,.07)-.18*gauss(d,.32,.08);
-      else y+=.28*gauss(d,.27,.075);
+function updateDefibUI(){
+  const chargedEl = document.getElementById('chargedValue');
+  const targetEl = document.getElementById('targetEnergyLabel');
+  const barEl = document.getElementById('chargeBar');
+  const shockBtn = document.getElementById('btnShock');
+  const chargeBtn = document.getElementById('btnCharge');
+  const syncBtn = document.getElementById('btnSync');
+  const syncBadge = document.getElementById('syncBadge');
+  const modeLabel = document.getElementById('defibModeLabel');
+  const statusText = document.getElementById('defibStatusText');
+
+  chargedEl.textContent = Math.round(chargedEnergy);
+  targetEl.textContent = targetEnergy;
+  const pct = targetEnergy > 0 ? Math.max(0, Math.min(100, (chargedEnergy / targetEnergy) * 100)) : 0;
+  barEl.style.width = pct.toFixed(1) + '%';
+
+  shockBtn.disabled = !isChargedReady;
+  chargeBtn.disabled = isCharging;
+
+  syncBtn.classList.toggle('active', isSyncMode);
+  syncBadge.textContent = isSyncMode ? 'SYNC: ON' : 'SYNC: OFF';
+  syncBadge.classList.toggle('on', isSyncMode);
+  modeLabel.textContent = isSyncMode ? 'SYNC CARDIOVERSION (MANUAL DEFIB)' : 'MANUAL DEFIBRILLATION';
+
+  if(isCharging){
+    statusText.textContent = `CHARGING... ${Math.round(chargedEnergy)} / ${targetEnergy} J`;
+    statusText.style.color = '#ff9f43';
+  }else if(isChargedReady){
+    statusText.textContent = `CHARGED ${targetEnergy} J — PRESS SHOCK`;
+    statusText.style.color = '#ff5757';
+  }else{
+    statusText.textContent = 'READY · SELECT ENERGY OR CHARGE';
+    statusText.style.color = '#ffe45c';
+  }
+}
+
+function startChargeSequence(customEnergy = null, onComplete = null){
+  if(customEnergy !== null){
+    targetEnergy = Number(customEnergy) || 200;
+    document.getElementById('defibEnergySelect').value = String(targetEnergy);
+  }else{
+    targetEnergy = Number(document.getElementById('defibEnergySelect').value) || 200;
+  }
+  stopAllDefibSound();
+  chargedEnergy = 0;
+  isCharging = true;
+  isChargedReady = false;
+  updateDefibUI();
+  startChargeSound();
+
+  const totalSteps = 25;
+  const stepDuration = 80;
+  let step = 0;
+  chargeInterval = setInterval(()=>{
+    step++;
+    chargedEnergy = Math.min(targetEnergy, (targetEnergy * step) / totalSteps);
+    updateDefibUI();
+    if(step >= totalSteps){
+      stopChargeSound();
+      chargedEnergy = targetEnergy;
+      isCharging = false;
+      isChargedReady = true;
+      updateDefibUI();
+      startReadyAlarm();
+      if(onComplete) onComplete();
+    }
+  }, stepDuration);
+}
+
+document.getElementById('defibEnergySelect').addEventListener('change', (e)=>{
+  targetEnergy = Number(e.target.value) || 200;
+  if(!isCharging){
+    stopAllDefibSound();
+    chargedEnergy = 0;
+    isChargedReady = false;
+    isAedShockSequence = false;
+  }
+  updateDefibUI();
+});
+
+document.getElementById('btnCharge').addEventListener('click', ()=>{
+  isAedShockSequence = false;
+  document.getElementById('aedBadge').style.display = 'none';
+  document.getElementById('defibAdvisoryMsg').textContent = `กำลังชาร์ตพลังงานไปยัง ${targetEnergy} J...`;
+  startChargeSequence();
+});
+
+document.getElementById('btnSync').addEventListener('click', ()=>{
+  isSyncMode = !isSyncMode;
+  isAedShockSequence = false;
+  if(isCharging || isChargedReady){
+    stopAllDefibSound();
+    isCharging = false;
+    isChargedReady = false;
+    chargedEnergy = 0;
+  }
+  updateDefibUI();
+  document.getElementById('defibAdvisoryMsg').textContent = isSyncMode
+    ? 'เปิดโหมด SYNC แล้ว — กดปุ่ม SYNC อีกครั้งเพื่อกลับเป็น Manual Defib'
+    : 'กลับสู่โหมด Manual Defibrillation ปกติ';
+  document.getElementById('defibLastAction').textContent = 'Last action: ' + (isSyncMode ? 'SYNC ON' : 'MANUAL DEFIB');
+});
+
+document.getElementById('btnAed').addEventListener('click', ()=>{
+  const shockableSet = new Set(["vf", "vf_fine", "vt_mono", "vt_poly", "torsades"]);
+  const isShockable = shockableSet.has(activeRhythm);
+  const aedBadge = document.getElementById('aedBadge');
+  aedBadge.style.display = 'inline-block';
+
+  if(isShockable){
+    isAedShockSequence = true;
+    aedBadge.textContent = 'AED: SHOCK ADVISED (200 J)';
+    aedBadge.style.borderColor = '#ff5757';
+    aedBadge.style.color = '#ff8d8d';
+    document.getElementById('defibAdvisoryMsg').textContent = 'AED: SHOCK ADVISED — ตั้งพลังงานอัตโนมัติ 200 J และกำลังชาร์ตไฟ...';
+    document.getElementById('defibLastAction').textContent = 'Last action: AED Shock Advised (200 J)';
+    speakEnglish('Shock advised. Charging to 200 joules.');
+    startChargeSequence(200, ()=>{
+      document.getElementById('defibAdvisoryMsg').textContent = 'AED: พร้อมแล้ว — กรุณากดปุ่ม SHOCK (เสียงเตือนจะดังจนกว่าจะกด SHOCK)';
+      speakEnglish('Shock advised, press the shock button now.');
+    });
+  }else{
+    isAedShockSequence = false;
+    stopAllDefibSound();
+    isCharging = false;
+    isChargedReady = false;
+    chargedEnergy = 0;
+    updateDefibUI();
+    aedBadge.textContent = 'AED: NO SHOCK ADVISED';
+    aedBadge.style.borderColor = '#37e7ef';
+    aedBadge.style.color = '#37e7ef';
+    document.getElementById('defibAdvisoryMsg').textContent = 'AED: NO SHOCK ADVISED — Start CPR';
+    document.getElementById('defibLastAction').textContent = 'Last action: AED No Shock Advised';
+    speakEnglish('No shock advised. Start CPR.');
+  }
+});
+
+document.getElementById('btnShock').addEventListener('click', ()=>{
+  if(!isChargedReady) return;
+  stopAllDefibSound();
+  const deliveredJ = targetEnergy;
+  const fromAed = isAedShockSequence;
+  isCharging = false;
+  isChargedReady = false;
+  isAedShockSequence = false;
+  chargedEnergy = 0;
+  updateDefibUI();
+  playShockTone();
+  const modeTag = isSyncMode ? 'SYNC Cardioversion' : 'Defibrillation';
+  if(fromAed){
+    document.getElementById('defibAdvisoryMsg').textContent = `ปล่อยพลังงาน ${deliveredJ} J แล้ว — Shock delivered. Start CPR`;
+    document.getElementById('defibLastAction').textContent = `Last action: AED Shock ${deliveredJ} J · Start CPR`;
+    document.getElementById('therapyText').textContent = `THERAPY: AED · Shock ${deliveredJ} J delivered · Start CPR`;
+    speakEnglish('Shock delivered. Start CPR.');
+  }else{
+    document.getElementById('defibAdvisoryMsg').textContent = `ปล่อยพลังงาน ${deliveredJ} J เรียบร้อยแล้ว (${modeTag})`;
+    document.getElementById('defibLastAction').textContent = `Last action: Shock ${deliveredJ} J delivered`;
+    document.getElementById('therapyText').textContent = `THERAPY: ${modeTag} · Shock ${deliveredJ} J delivered · ${deliveredJ} J`;
+  }
+});
+
+function setDefibPanelVisible(show){
+  const panel = document.getElementById('defibPanel');
+  if(show){
+    panel.classList.add('show');
+    updateDefibUI();
+  }else{
+    stopAllDefibSound();
+    try{ if('speechSynthesis' in window) window.speechSynthesis.cancel(); }catch(e){}
+    isCharging = false;
+    isChargedReady = false;
+    isAedShockSequence = false;
+    chargedEnergy = 0;
+    isSyncMode = false;
+    panel.classList.remove('show');
+    updateDefibUI();
+  }
+}
+
+/* Transcutaneous Pacing Simulation Controller */
+let simPaceMode = 'Demand', simPaceRate = 70, simPaceMa = 60, simPaceRunning = false, simPaceTimer = null;
+
+function playPaceClick(){
+  if(!soundOn) return;
+  try{
+    const ctx = ensureAudio();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(520, ctx.currentTime);
+    g.gain.setValueAtTime(0.0001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.06, ctx.currentTime + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.035);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime + 0.04);
+  }catch(e){}
+}
+
+function flashPaceDot(){
+  const dot = document.getElementById('pacePulseDot');
+  if(!dot) return;
+  dot.classList.add('flash');
+  playPaceClick();
+  setTimeout(()=>dot.classList.remove('flash'), 110);
+}
+
+function restartPaceTicker(){
+  if(simPaceTimer){ clearInterval(simPaceTimer); simPaceTimer = null; }
+  if(!simPaceRunning) return;
+  const intervalMs = Math.max(250, Math.round(60000 / Math.max(30, simPaceRate)));
+  flashPaceDot();
+  simPaceTimer = setInterval(flashPaceDot, intervalMs);
+}
+
+function updatePacingUI(){
+  document.getElementById('uiPaceRate').textContent = simPaceRate;
+  document.getElementById('uiPaceMa').textContent = simPaceMa;
+  document.getElementById('btnPaceDemand').classList.toggle('active', simPaceMode === 'Demand');
+  document.getElementById('btnPaceFixed').classList.toggle('active', simPaceMode === 'Fixed');
+  document.getElementById('paceModeBadge').textContent = `MODE: ${simPaceMode.toUpperCase()}`;
+
+  const toggleBtn = document.getElementById('btnPaceStartStop');
+  const mainTxt = document.getElementById('paceBtnMainText');
+  const subTxt = document.getElementById('paceBtnSubText');
+  const statusEl = document.getElementById('paceStatusText');
+
+  toggleBtn.classList.toggle('running', simPaceRunning);
+  if(simPaceRunning){
+    mainTxt.textContent = '■ STOP PACING';
+    subTxt.textContent = 'กำลังปล่อยกระตุ้น (คลิกเพื่อหยุด)';
+    statusEl.textContent = `PACING ACTIVE (${simPaceMode.toUpperCase()}) · ${simPaceRate} ppm · ${simPaceMa} mA`;
+    statusEl.style.color = '#42e3a2';
+  }else{
+    mainTxt.textContent = '▶ START PACING';
+    subTxt.textContent = 'กดเพื่อเริ่มปล่อยกระตุ้น';
+    statusEl.textContent = `STANDBY (${simPaceMode.toUpperCase()}) · ${simPaceRate} ppm · ${simPaceMa} mA`;
+    statusEl.style.color = '#ffe45c';
+  }
+}
+
+document.getElementById('btnPaceDemand').addEventListener('click', ()=>{
+  simPaceMode = 'Demand'; updatePacingUI();
+  document.getElementById('paceLastAction').textContent = 'Last action: Selected Demand Mode';
+});
+document.getElementById('btnPaceFixed').addEventListener('click', ()=>{
+  simPaceMode = 'Fixed'; updatePacingUI();
+  document.getElementById('paceLastAction').textContent = 'Last action: Selected Fixed Mode';
+});
+document.getElementById('btnPaceRateDown').addEventListener('click', ()=>{
+  simPaceRate = Math.max(30, simPaceRate - 5); updatePacingUI();
+  if(simPaceRunning) restartPaceTicker();
+  document.getElementById('paceLastAction').textContent = `Last action: Rate ${simPaceRate} ppm`;
+});
+document.getElementById('btnPaceRateUp').addEventListener('click', ()=>{
+  simPaceRate = Math.min(180, simPaceRate + 5); updatePacingUI();
+  if(simPaceRunning) restartPaceTicker();
+  document.getElementById('paceLastAction').textContent = `Last action: Rate ${simPaceRate} ppm`;
+});
+document.getElementById('btnPaceMaDown').addEventListener('click', ()=>{
+  simPaceMa = Math.max(0, simPaceMa - 5); updatePacingUI();
+  document.getElementById('paceLastAction').textContent = `Last action: Output ${simPaceMa} mA`;
+});
+document.getElementById('btnPaceMaUp').addEventListener('click', ()=>{
+  simPaceMa = Math.min(200, simPaceMa + 5); updatePacingUI();
+  document.getElementById('paceLastAction').textContent = `Last action: Output ${simPaceMa} mA`;
+});
+document.getElementById('btnPaceStartStop').addEventListener('click', ()=>{
+  simPaceRunning = !simPaceRunning; updatePacingUI();
+  if(simPaceRunning){
+    restartPaceTicker();
+    document.getElementById('paceLastAction').textContent = `Last action: Pacing STARTED (${simPaceMode}, ${simPaceRate} ppm, ${simPaceMa} mA)`;
+    document.getElementById('therapyText').textContent = `THERAPY: Transcutaneous Pacing (${simPaceMode}) · ${simPaceRate} ppm · ${simPaceMa} mA [ACTIVE]`;
+  }else{
+    if(simPaceTimer){ clearInterval(simPaceTimer); simPaceTimer = null; }
+    document.getElementById('pacePulseDot').classList.remove('flash');
+    document.getElementById('paceLastAction').textContent = 'Last action: Pacing STOPPED';
+    document.getElementById('therapyText').textContent = `THERAPY: Transcutaneous Pacing (${simPaceMode}) · ${simPaceRate} ppm · ${simPaceMa} mA [STANDBY]`;
+  }
+});
+
+function setPacingPanelVisible(show){
+  const panel = document.getElementById('pacingPanel');
+  if(show){
+    panel.classList.add('show'); updatePacingUI();
+  }else{
+    simPaceRunning = false;
+    if(simPaceTimer){ clearInterval(simPaceTimer); simPaceTimer = null; }
+    document.getElementById('pacePulseDot').classList.remove('flash');
+    panel.classList.remove('show'); updatePacingUI();
+  }
+}
+
+/* EMS TUH Physiological ECG Engine v4.5 */
+const EMSECG = (() => {
+  const gauss = (x, m, s) => Math.exp(-0.5 * Math.pow((x - m) / s, 2));
+  const hash = (n, seed = 17) => { const z = Math.sin((n + 1) * 127.1 + seed * 31.7) * 43758.5453; return z - Math.floor(z); };
+  const afSet = new Set(["af", "af_rvr", "af_slow"]);
+  const junctionalSet = new Set(["junctional", "junctional_brady", "junctional_accel", "junctional_tachy"]);
+  const wideVentricular = new Set(["vt_mono", "idioventricular", "aivr"]);
+  const bbbSet = new Set(["rbbb", "lbbb", "bifascicular"]);
+
+  function events(rhythm, rate, seed = 17, duration = 3600) {
+    const r = Number(rate);
+    if (!Number.isFinite(r) || r <= 0) return [];
+    const out = [];
+    const ventricularCycle = 60 / Math.min(300, r);
+    const push = (aT, qT, kind, pr, n, rr, extra = null, anchorT = null) => {
+      const candidates = [anchorT, aT, qT, extra && extra.spikeTime].filter(x => typeof x === "number" && Number.isFinite(x));
+      const sortTime = candidates.length ? candidates[0] : (n * ventricularCycle);
+      out.push({ t: sortTime, aT, qT, kind, pr, n, rr, seed, extra });
+    };
+
+    if (["vf", "vf_fine", "asystole", "torsades"].includes(rhythm)) return out;
+
+    if (rhythm === "vt_poly") {
+      let t = -3, n = 0;
+      while (t < duration) {
+        const hFocus = hash(n, seed + 3), hExit = hash(n * 3 + 7, seed + 13), hAmp = hash(n * 5 + 11, seed + 29), hWidth = hash(n * 7 + 19, seed + 41), hStep = hash(n * 11 + 23, seed + 53);
+        const beatDur = Math.max(0.22, Math.min(0.38, ventricularCycle * (0.76 + 0.24 * hWidth)));
+        const step = Math.max(beatDur + 0.015, ventricularCycle * (0.82 + 0.34 * hStep));
+        push(null, t, "pvt_beat", 0, n, step, { beatDur, hFocus, hExit, hAmp, hWidth }, t);
+        t += step; n++;
+      }
+      return out;
+    }
+
+    if (rhythm === "mobitz1" || rhythm === "mobitz2") {
+      const ratio = rhythm === "mobitz1" ? (4 / 3) : (3 / 2);
+      const atrialCycle = ventricularCycle / ratio;
+      let n = 0;
+      for (let aT = -atrialCycle * 4; aT < duration; aT += atrialCycle, n++) {
+        const dropped = rhythm === "mobitz1" ? (n % 4 === 3) : (n % 3 === 2);
+        const pr = rhythm === "mobitz1" ? [0.16, 0.24, 0.32, 0.16][n % 4] : 0.18;
+        push(aT, dropped ? null : aT + pr, dropped ? "dropped" : "conducted", pr, n, atrialCycle, null, aT);
+      }
+      return out;
+    }
+
+    if (rhythm === "av3") {
+      const atrialCycle = 60 / Math.min(110, Math.max(70, r * 2.1));
+      let n = 0;
+      for (let aT = -3; aT < duration; aT += atrialCycle, n++) push(aT, null, "av3_atrial", 0, n, atrialCycle, null, aT);
+      const escapeCycle = 60 / Math.max(20, Math.min(60, r));
+      n = 0;
+      for (let qT = -3.15; qT < duration; qT += escapeCycle, n++) push(null, qT, "av3_qrs", 0, n, escapeCycle, null, qT);
+      return out.sort((a, b) => a.t - b.t);
+    }
+
+    if (rhythm === "flutter") {
+      let t = -3, n = 0;
+      while (t < duration) {
+        const rr = Math.max(0.26, ventricularCycle);
+        const fCount = rr >= 0.65 ? 3 : 2;
+        const fw = Math.min(0.15, (rr * 0.72) / fCount);
+        const fTimes = [];
+        for (let k = fCount; k >= 1; k--) fTimes.push(t - k * fw - 0.02);
+        push(null, t, "flutter", 0, n, rr, { fTimes, fw }, t);
+        t += rr; n++;
+      }
+      return out;
+    }
+
+    let t = -3, n = 0;
+    while (t < duration) {
+      let rr = ventricularCycle, kind = "normal", pr = 0.16, aT = t, qT = t + pr, extra = null;
+      if (afSet.has(rhythm)) { rr = ventricularCycle * (0.52 + hash(n, seed) * 0.96); aT = null; qT = t; kind = "af"; }
+      else if (rhythm === "sinus_arrhythmia") { rr = ventricularCycle * (0.80 + 0.40 * (0.5 + 0.5 * Math.sin(n * 1.25))); }
+      else if (rhythm === "sinus_pause") { if (n % 6 === 4) rr = ventricularCycle * 2.4; }
+      else if (rhythm === "pac") { if (n % 4 === 2) { rr = ventricularCycle * 0.68; kind = "pac"; aT = t - 0.08; qT = aT + 0.15; pr = 0.15; } }
+      else if (rhythm === "pvc" || rhythm === "bigeminy" || rhythm === "trigeminy") {
+        const isPvc = (rhythm === "pvc" && n % 5 === 3) || (rhythm === "bigeminy" && n % 2 === 1) || (rhythm === "trigeminy" && n % 3 === 2);
+        if (isPvc) { rr = ventricularCycle * 0.65; kind = "pvc"; aT = null; qT = t; }
+      } else if (junctionalSet.has(rhythm)) { kind = "junctional"; aT = t - 0.09; qT = t; pr = 0.09; }
+      else if (wideVentricular.has(rhythm)) { kind = "wide"; aT = null; qT = t; }
+      else if (rhythm === "paced_capture") { kind = "paced_captured_beat"; aT = null; qT = t; extra = { spikeTime: t - 0.016 }; }
+      else if (rhythm === "paced_noncapture") {
+        const captured = (n % 3 === 0);
+        kind = captured ? "paced_captured_beat" : "paced_missed_beat";
+        aT = null; qT = captured ? t : null; extra = { spikeTime: captured ? (t - 0.016) : t };
+      } else if (rhythm === "av1") { pr = 0.28; qT = aT + pr; }
+      else if (rhythm === "atrial_tachy") { pr = 0.13; qT = aT + pr; }
+      else if (rhythm === "mat") { rr = ventricularCycle * (0.72 + 0.56 * hash(n, seed + 9)); pr = [0.13, 0.18, 0.23][n % 3]; qT = aT + pr; }
+      else if (rhythm === "svt") { aT = null; qT = t; kind = "svt"; }
+      else if (rhythm === "artifact") { kind = "artifact"; }
+
+      push(aT, qT, kind, pr, n, rr, extra, t);
+      t += Math.max(0.18, rr); n++;
+    }
+    return out;
+  }
+
+  function leadWeights(lead = "II") {
+    const map = {
+      "I":   { p: 0.85, q: 0.7,  r: 0.85, s: 0.4,  t: 0.85 },
+      "II":  { p: 1.00, q: 1.0,  r: 1.00, s: 1.0,  t: 1.00 },
+      "III": { p: 0.55, q: 1.1,  r: 0.65, s: 1.2,  t: 0.60 },
+      "aVR": { p: -0.9, q: 0.2,  r: -0.9, s: -0.4, t: -0.85 },
+      "aVL": { p: 0.45, q: 0.8,  r: 0.65, s: 0.6,  t: 0.55 },
+      "aVF": { p: 0.85, q: 1.0,  r: 0.85, s: 1.1,  t: 0.85 },
+      "V1":  { p: 0.40, q: 0.0,  r: 0.22, s: 3.1,  t: -0.35 },
+      "V2":  { p: 0.55, q: 0.0,  r: 0.45, s: 2.6,  t: 0.75 },
+      "V3":  { p: 0.65, q: 0.1,  r: 0.85, s: 1.4,  t: 1.10 },
+      "V4":  { p: 0.75, q: 0.4,  r: 1.25, s: 0.7,  t: 1.15 },
+      "V5":  { p: 0.80, q: 0.8,  r: 1.15, s: 0.35, t: 0.95 },
+      "V6":  { p: 0.75, q: 0.8,  r: 0.95, s: 0.2,  t: 0.80 }
+    };
+    return map[lead] || map["II"];
+  }
+
+  function flutterTooth(u) {
+    if (u < 0 || u > 1) return 0;
+    if (u < 0.45) return -0.22 + 0.54 * Math.sin((u / 0.45) * (Math.PI * 0.5));
+    if (u < 0.92) { const p = (u - 0.45) / 0.47; return 0.32 - 0.56 * Math.pow(p, 1.35); }
+    const q = (u - 0.92) / 0.08;
+    return -0.24 * (1 - q);
+  }
+
+  function pvtRandomBeat(u, hFocus, hExit, hAmp, hWidth) {
+    if (u < 0 || u > 1) return 0;
+    const win = Math.sin(Math.PI * Math.pow(u, 0.8));
+    const polarity = (hExit < 0.45) ? 1 : (hExit < 0.90 ? -1 : (hFocus > 0.5 ? 0.8 : -0.8));
+    const c1 = 0.20 + 0.22 * hFocus, c2 = 0.55 + 0.25 * hExit, c3 = 0.32 + 0.36 * ((hFocus + hExit) % 1);
+    const w1 = 0.08 + 0.10 * hWidth, w2 = 0.09 + 0.11 * (1 - hWidth);
+    const a1 = 0.55 + 0.75 * hAmp, a2 = 0.50 + 0.80 * ((hAmp * 1.7) % 1);
+    const notch = (hFocus > 0.35 ? 0.32 : -0.28) * gauss(u, c3, 0.065);
+    const raw = a1 * gauss(u, c1, w1) - a2 * gauss(u, c2, w2) + notch;
+    return polarity * raw * (0.45 + 0.55 * win);
+  }
+
+  function valueAt(sec, rhythm, rate, seed = 17, evts = null, lead = "II", stShift = 0) {
+    const w = leadWeights(lead);
+    if (rhythm === "asystole") return 0.022 * Math.sin(sec * 1.35 + seed * 0.4) + 0.011 * Math.cos(sec * 2.8) + 0.004 * Math.sin(sec * 6.2);
+    if (rhythm === "vf") return (0.25 * Math.sin(sec * 12.5 + Math.sin(sec * 3.1) * 1.3) + 0.14 * Math.sin(sec * 19.0 + 0.8) + 0.08 * Math.sin(sec * 7.2 + 2.1) + 0.04 * Math.cos(sec * 28.0)) * (w.r >= 0 ? 1 : -1);
+    if (rhythm === "vf_fine") return (0.026 * Math.sin(sec * 11.5 + Math.sin(sec * 2.7) * 1.2 + seed * 0.5) + 0.017 * Math.sin(sec * 17.5 + 0.7) + 0.009 * Math.cos(sec * 6.4 + 1.8) + 0.005 * Math.sin(sec * 24.0)) * (w.r >= 0 ? 1 : -1);
+    if (rhythm === "torsades") return (0.10 + 0.80 * Math.abs(Math.sin(sec * 1.45))) * (Math.sin(sec * 25 + Math.sin(sec * 2.9) * 1.8) + 0.22 * Math.sin(sec * 50)) * (w.r >= 0 ? 1 : -1);
+
+    const es = evts || events(rhythm, rate, seed);
+    let y = 0;
+    if (afSet.has(rhythm)) y += 0.042 * Math.sin(sec * 31 + Math.sin(sec * 7) * 2) + 0.030 * Math.sin(sec * 47 + 1.2) + 0.018 * Math.sin(sec * 19);
+    if (rhythm === "artifact") y += 0.13 * Math.sin(sec * 17) + 0.07 * Math.sin(sec * 41) + 0.04 * Math.sin(sec * 73);
+
+    let lo = 0, hi = es.length;
+    const searchLimit = sec + 0.65;
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (es[mid].t <= searchLimit) lo = mid + 1; else hi = mid; }
+
+    for (let i = lo - 1; i >= 0; i--) {
+      const e = es[i];
+      if (sec - e.t > 1.0) break;
+      if (e.kind === "pvt_beat" && e.extra) {
+        const u = (sec - e.t) / e.extra.beatDur;
+        if (u >= 0 && u <= 1) y += pvtRandomBeat(u, e.extra.hFocus, e.extra.hExit, e.extra.hAmp, e.extra.hWidth) * (w.r >= 0 ? 1 : -1);
+        continue;
+      }
+      if (e.kind === "flutter" && e.extra && Array.isArray(e.extra.fTimes)) {
+        const fw = e.extra.fw || 0.14, sign = w.p >= 0 ? 1 : -1;
+        for (let k = 0; k < e.extra.fTimes.length; k++) {
+          const u = (sec - e.extra.fTimes[k]) / fw;
+          if (u >= 0 && u <= 1) y += 0.52 * flutterTooth(u) * sign;
+        }
+      }
+      if (e.kind === "paced_missed_beat" && e.extra) {
+        const sd = sec - e.extra.spikeTime;
+        if (Math.abs(sd) < 0.04) y += 1.08 * gauss(sd, 0, 0.003) - 0.25 * gauss(sd, 0.007, 0.0035);
+        continue;
+      }
+      if (e.aT !== null && e.aT !== undefined) {
+        const ad = sec - e.aT;
+        if (Math.abs(ad) < 0.18) {
+          let pAmp = 0.22 * w.p, pWidth = 0.032;
+          if (e.kind === "junctional") { pAmp = -0.19 * Math.abs(w.p); pWidth = 0.026; }
+          else if (rhythm === "mat") { pAmp = [0.22, -0.17, 0.29][e.n % 3] * w.p; pWidth = [0.028, 0.036, 0.024][e.n % 3]; }
+          else if (e.kind === "pac") { pAmp = 0.27 * w.p; pWidth = 0.027; }
+          else if (rhythm === "atrial_tachy") { pAmp = 0.20 * w.p; pWidth = 0.028; }
+          y += pAmp * gauss(ad, 0, pWidth);
+        }
+      }
+      if (e.qT === null || e.qT === undefined) continue;
+      const d = sec - e.qT;
+      if (Math.abs(d) > 0.85 || e.kind === "dropped" || e.kind === "av3_atrial") continue;
+
+      if (e.kind === "pvc" || (e.kind === "wide" && !bbbSet.has(rhythm))) {
+        const qw = ["vt_mono", "aivr"].includes(rhythm) ? 0.044 : 0.052;
+        const dir = w.r >= 0 ? 1 : -1;
+        y += dir * (-0.18 * gauss(d, -0.048, qw * 0.6) + 0.95 * gauss(d, 0, qw) - 0.38 * gauss(d, 0.075, qw * 0.9) - 0.26 * gauss(d, 0.240, 0.085));
+        continue;
+      }
+      if (e.kind === "paced" || e.kind === "paced_captured_beat") {
+        y += 1.08 * gauss(d, -0.016, 0.0028) - 0.24 * gauss(d, -0.009, 0.0032);
+        y += -0.15 * gauss(d, 0.01, 0.015) + 0.90 * gauss(d, 0.055, 0.036) - 0.30 * gauss(d, 0.11, 0.03) - 0.22 * gauss(d, 0.28, 0.085);
+        continue;
+      }
+      if (e.kind === "av3_qrs") {
+        const dir = w.r >= 0 ? 1 : -1;
+        y += dir * (-0.16 * gauss(d, -0.04, 0.025) + 0.82 * gauss(d, 0, 0.038) - 0.30 * gauss(d, 0.068, 0.035) + 0.22 * gauss(d, 0.27, 0.085));
+        continue;
+      }
+      if (rhythm === "rbbb" || rhythm === "bifascicular") {
+        y += -0.12 * w.q * gauss(d, -0.032, 0.010) + 0.72 * w.r * gauss(d, -0.005, 0.011) - 0.32 * w.s * gauss(d, 0.022, 0.011) + 0.52 * w.r * gauss(d, 0.052, 0.015) - 0.22 * w.t * gauss(d, 0.250, 0.070);
+        continue;
+      }
+      if (rhythm === "lbbb") {
+        const dir = w.r >= 0 ? 1 : -1;
+        y += dir * (0.78 * gauss(d, -0.012, 0.022) + 0.86 * gauss(d, 0.032, 0.024) - 0.16 * gauss(d, 0.140, 0.045) - 0.26 * gauss(d, 0.260, 0.075));
+        continue;
+      }
+
+      y += -0.14 * w.q * gauss(d, -0.030, 0.008) + 1.02 * w.r * gauss(d, 0, 0.011) - 0.26 * w.s * gauss(d, 0.032, 0.010);
+
+      if (stShift !== 0 && d > 0.022 && d < 0.32) {
+        y += stShift * gauss(d, 0.115, 0.068);
+      }
+      if (e.kind === "svt") {
+        y += 0.30 * w.t * gauss(d, 0.21, 0.058) - 0.10 * Math.abs(w.r) * gauss(d, 0.055, 0.014);
+      } else {
+        let tAmp = 0.27 * w.t;
+        if (stShift > 0.12) tAmp += stShift * 0.75;
+        else if (stShift < -0.12) tAmp = Math.min(tAmp, -0.22 * Math.abs(w.t || 1));
+        y += tAmp * gauss(d, 0.255, 0.068);
+      }
+    }
+
+    if (rhythm === "agonal") y += 0.05 * Math.sin(sec * 7.5) + 0.22 * Math.sin(sec * 2.0);
+    return y;
+  }
+
+  return { events, valueAt };
+})();
+
+/* 12-Lead Full-Screen Renderer (Uniform black trace, no answer hints on monitor) */
+const LEFT_LEADS = ["I","II","III","aVR","aVL","aVF"];
+const RIGHT_LEADS = ["V1","V2","V3","V4","V5","V6"];
+
+function buildOverlayStripPoints(rate, rhythm, lead, stMap, isRightCol, widthPx = 620, heightPx = 68, spanSec = 4.6){
+  const r = Math.max(10, Math.min(260, Number(rate) || 75));
+  const rh = rhythm || "nsr";
+  const stMode = (stMap && stMap[lead]) || "normal";
+  const stShift = stMode === "up" ? 0.42 : (stMode === "down" ? -0.30 : 0);
+  const seed = 17;
+  const evts = EMSECG.events(rh, r, seed, 12);
+  const baselineY = heightPx * 0.62;
+  const ampScale = heightPx * 0.32;
+
+  const calX = 22;
+  const calHighY = baselineY - heightPx * 0.22;
+  const pts = [
+    `0,${baselineY.toFixed(1)}`,
+    `4,${baselineY.toFixed(1)}`,
+    `5,${calHighY.toFixed(1)}`,
+    `14,${calHighY.toFixed(1)}`,
+    `15,${baselineY.toFixed(1)}`,
+    `${calX},${baselineY.toFixed(1)}`
+  ];
+
+  const startX = calX + 2;
+  const steps = Math.max(100, Math.floor((widthPx - startX) / 2));
+  const timeOffset = isRightCol ? 1.55 : 0;
+
+  for(let i = 0; i <= steps; i++){
+    const frac = i / steps;
+    const x = startX + frac * (widthPx - startX);
+    const sec = timeOffset + frac * spanSec;
+    const z = EMSECG.valueAt(sec, rh, r, seed, evts, lead, stShift);
+    const clampedZ = Math.max(-1.25, Math.min(1.35, z));
+    const y = baselineY - clampedZ * ampScale;
+    pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+  }
+  return pts.join(" ");
+}
+
+function renderOverlayColumn(elId, leadList, rate, rhythm, stMap, isRightCol){
+  document.getElementById(elId).innerHTML = leadList.map(lead => {
+    return `<div class="ecg12-cell">
+      <span class="ecg12-lead">${lead}</span>
+      <svg viewBox="0 0 620 68" preserveAspectRatio="none">
+        <polyline points="${buildOverlayStripPoints(rate, rhythm, lead, stMap, isRightCol, 620, 68, 4.6)}" fill="none" stroke="#111827" stroke-width="1.5" stroke-linejoin="round"/>
+      </svg>
+    </div>`;
+  }).join("");
+}
+
+function applyMonitorECG(d){
+  document.getElementById("ecgText").textContent = d && d.visible ? "12-LEAD: ACTIVE" : "12-LEAD: —";
+  const overlay = document.getElementById("ecg12Overlay");
+  const scenarioBar = document.getElementById("liveScenario");
+  if(!d || d.visible !== true){
+    overlay.classList.remove("show");
+    scenarioBar.classList.remove("hidden-for-12lead");
+    return;
+  }
+  const rate = Math.max(10, Math.min(260, Number(d.rate) || 75));
+  const rh = d.rhythm || activeRhythm || "nsr";
+  const stMap = d.leadStates || {};
+  document.getElementById("ovRate").textContent = rate;
+  renderOverlayColumn("ovColLeft", LEFT_LEADS, rate, rh, stMap, false);
+  renderOverlayColumn("ovColRight", RIGHT_LEADS, rate, rh, stMap, true);
+  overlay.classList.add("show");
+  scenarioBar.classList.add("hidden-for-12lead");
+}
+
+document.getElementById("btnClose12Overlay").addEventListener("click", ()=>{
+  document.getElementById("ecg12Overlay").classList.remove("show");
+  document.getElementById("liveScenario").classList.remove("hidden-for-12lead");
+});
+
+let rhythmSeed=17;
+function buildRhythmEvents(){rhythmEvents=EMSECG.events(activeRhythm,HR,rhythmSeed);lastBeat=-1;}
+function ecgWave(p){return 0;}
+function ecgValueAt(sec){return EMSECG.valueAt(sec,activeRhythm,HR,rhythmSeed,rhythmEvents,"II");}
+function plethWave(p){if(pulseStatus==="pulseless")return .002*Math.sin(p*40);if(p<.12)return 0;if(p<.28)return (p-.12)/.16;if(p<.38)return 1-(p-.28)/.10*.35;if(p<.62)return .65-(p-.38)/.24*.55;return .10}
+function capWave(p){if(p<.12)return 0;if(p<.22)return (p-.12)/.10*.78;if(p<.68)return .78;if(p<.78)return .78*(1-(p-.68)/.10);return 0}
+function drawGrid(ctx,w,h){ctx.fillStyle='#03090a';ctx.fillRect(0,0,w,h);ctx.lineWidth=.6;ctx.strokeStyle='#102522';for(let x=0;x<w;x+=5){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}for(let y=0;y<h;y+=5){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}ctx.strokeStyle='#1b3932';ctx.lineWidth=1;for(let x=0;x<w;x+=25){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}for(let y=0;y<h;y+=25){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}}
+function draw(id,fn,amp,baseline,t,color,cycle){
+  const {c,ctx}=canvases[id],w=c.clientWidth,h=c.clientHeight;
+  drawGrid(ctx,w,h);
+  ctx.save();ctx.beginPath();ctx.rect(0,0,w,h);ctx.clip();
+  ctx.strokeStyle=color;ctx.lineWidth=2;ctx.shadowColor=color;ctx.shadowBlur=5;ctx.beginPath();
+  const effectiveAmp = id === 'ecg' ? amp * ecgAmpScale : amp;
+  for(let x=0;x<w;x++){
+    const time=t-(w-x)/125;
+    let p=((time/period)%1+1)%1;
+    let val=id==='ecg'?ecgValueAt(time):fn(p);
+    let y=baseline-val*effectiveAmp;
+    if(id==='pleth')y+=Math.sin(time*2)*.6;
+    if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  }
+  ctx.stroke();ctx.restore();
+}
+function beep(){if(!soundOn)return;try{ensureAudio();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.value=880;g.gain.setValueAtTime(.0001,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.12,audioCtx.currentTime+.006);g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+.055);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.06)}catch(e){}}
+function tick(now){
+  const t=(now-start)/1000;
+  if(!paused){
+    draw('ecg',ecgWave,50,canvases.ecg.c.clientHeight*.58,t,colors.ecg);
+    draw('pleth',plethWave,65,canvases.pleth.c.clientHeight*.82,t,colors.pleth);
+    draw('capno',capWave,62,canvases.capno.c.clientHeight*.82,t,colors.capno);
+    let current=null;
+    for(let i=rhythmEvents.length-1;i>=0;i--){
+      const ev=rhythmEvents[i];
+      const beatTime = (ev.qT !== null && ev.qT !== undefined) ? ev.qT : (ev.extra && ev.extra.spikeTime);
+      if(beatTime !== null && beatTime !== undefined && beatTime <= t){current=ev;break;}
+    }
+    if(current&&current.n!==lastBeat){
+      lastBeat=current.n;
+      const hasBeat = (current.qT !== null && current.qT !== undefined);
+      if(hasBeat && !['vf','vf_fine','asystole','torsades','vt_poly'].includes(activeRhythm)&&pulseStatus!=='pulseless')beep();
     }
   }
-  if(r==='flutter')y+=.025*Math.sin(2*Math.PI*5*sec);
-  if(r==='av3'){const ap=((sec*1.25)%1);y+=.12*gauss(ap,.22,.035)} // independent atrial activity, dissociated from QRS
-  if(r==='agonal')y+=.04*Math.sin(sec*8)+.18*Math.sin(sec*2.1);
-  return y;
+  requestAnimationFrame(tick);
 }
-function plethWave(p){if(p<.12)return 0;if(p<.28)return (p-.12)/.16;if(p<.38)return 1-(p-.28)/.10*.35;if(p<.62)return .65-(p-.38)/.24*.55;return .10}
-function capWave(p){if(p<.12)return 0;if(p<.22)return (p-.12)/.10*.78;if(p<.68)return .78;if(p<.78)return .78*(1-(p-.68)/.10);return 0}
-function drawGrid(ctx,w,h){ctx.fillStyle='#03090a';ctx.fillRect(0,0,w,h);ctx.lineWidth=.6;ctx.strokeStyle='#102522';for(let x=0;x<w;x+=10){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}for(let y=0;y<h;y+=10){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}ctx.strokeStyle='#1b3932';ctx.lineWidth=1;for(let x=0;x<w;x+=50){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}for(let y=0;y<h;y+=50){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}}
-function draw(id,fn,amp,baseline,t,color,cycle){const {c,ctx}=canvases[id],w=c.clientWidth,h=c.clientHeight;drawGrid(ctx,w,h);ctx.save();ctx.beginPath();ctx.rect(0,0,w,h);ctx.clip();ctx.strokeStyle=color;ctx.lineWidth=2;ctx.shadowColor=color;ctx.shadowBlur=5;ctx.beginPath();for(let x=0;x<w;x++){const time=t-(w-x)/105;let p=((time/period)%1+1)%1;let val=id==='ecg'?ecgValueAt(time):fn(p);let y=baseline-val*amp;if(id==='pleth')y+=Math.sin(time*2)*.6;if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)}ctx.stroke();ctx.restore()}
-function beep(){if(!soundOn)return;try{audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.value=880;g.gain.setValueAtTime(.0001,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.12,audioCtx.currentTime+.006);g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+.055);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.06)}catch(e){}}
-function tick(now){const t=(now-start)/1000;if(!paused){draw('ecg',ecgWave,42,canvases.ecg.c.clientHeight*.57,t,colors.ecg);draw('pleth',plethWave,65,canvases.pleth.c.clientHeight*.82,t,colors.pleth);draw('capno',capWave,62,canvases.capno.c.clientHeight*.82,t,colors.capno);let current=null;for(let i=rhythmEvents.length-1;i>=0;i--){if(rhythmEvents[i].t<=t){current=rhythmEvents[i];break}}if(current&&current.n!==lastBeat){lastBeat=current.n;if(!['vf','asystole'].includes(activeRhythm))beep()}}requestAnimationFrame(tick)}
 buildRhythmEvents();
 requestAnimationFrame(tick);
 function updateClock(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('th-TH',{hour12:false})}updateClock();setInterval(updateClock,1000);
@@ -182,7 +1061,6 @@ document.getElementById('soundBtn').onclick=e=>{soundOn=!soundOn;e.currentTarget
 document.getElementById('pauseBtn').onclick=e=>{paused=!paused;e.currentTarget.textContent=paused?'▶ เล่นคลื่น':'Ⅱ หยุดคลื่น';e.currentTarget.classList.toggle('active',paused)};
 document.getElementById('fullBtn').onclick=async()=>{try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch(e){}};
 
-// Firebase configuration is embedded so users do not need to enter it.
 const firebaseConfig = {
   apiKey: "AIzaSyC0NcHBU6Ice_hjUe3RrniHWRGqeJO7JO0",
   authDomain: "ems-thammasat.firebaseapp.com",
@@ -217,9 +1095,10 @@ async function createRoom(){
     monitorPin=chosen;monitorRoom=monitorDb.ref("emsMonitorRooms/"+monitorPin);
     await monitorRoom.child("state").update({
       vitals:{hr:75,spo2:98,rr:16,nibp:{sys:120,dia:80},etco2:38,temp:36.8,pleth:75,capno:75},
-      rhythm:{group:"sinus",rhythm:"nsr",rate:75},
-      therapy:{mode:"Monitor",energy:200,paceRate:70,paceMa:60,status:"Ready"},
-      ecg12lead:{pattern:"normal",patternLabel:"Normal / no acute ST elevation",rate:75,patientId:"",leads:[],timestamp:null}
+      rhythm:{group:"sinus",rhythm:"nsr",rate:75,pulseStatus:"present"},
+      therapy:{mode:"Monitor",energy:200,paceRate:70,paceMa:60},
+      ecg12lead:{visible:false,pattern:"normal",patternLabel:"Normal (No ST shift)",rate:75,patientId:"",leadStates:{},timestamp:null},
+      display:{ecgWave:true,plethWave:true,capnoWave:true,hr:true,spo2:true,bp:true,etco2:true,rr:true,temp:true,rhythmInfo:true,ecgAmp:1.0}
     });
     document.getElementById("pinDisplay").textContent=monitorPin;
     document.getElementById("copyPin").disabled=false;
@@ -231,6 +1110,7 @@ async function createRoom(){
       if(state.rhythm)applyMonitorRhythm(state.rhythm);
       if(state.therapy)applyMonitorTherapy(state.therapy);
       if(state.ecg12lead)applyMonitorECG(state.ecg12lead);
+      if(state.display)applyMonitorDisplay(state.display);
     };
     monitorRoom.child("state").on("value",monitorStateListener);
   }catch(err){console.error(err);setRoomStatus("สร้างห้องไม่สำเร็จ: "+err.message)}
@@ -240,26 +1120,60 @@ function applyMonitorVitals(d){
   if(d.hr!==undefined)document.getElementById("hr").textContent=d.hr;
   if(d.spo2!==undefined)document.getElementById("spo2").textContent=d.spo2;
   if(d.nibp){
-    const map=Math.round((Number(d.nibp.sys)+2*Number(d.nibp.dia))/3);
-    document.getElementById("bp").innerHTML=`${d.nibp.sys}/${d.nibp.dia} <small style="font-size:17px"> (${map})</small>`;
+    const sys = Number(d.nibp.sys), dia = Number(d.nibp.dia);
+    const map = (Number.isFinite(sys) && Number.isFinite(dia)) ? Math.round((sys+2*dia)/3) : "—";
+    document.getElementById("bp").innerHTML=`${d.nibp.sys}/${d.nibp.dia} <small style="font-size:15px"> (${map})</small>`;
   }
   if(d.etco2!==undefined)document.getElementById("etco2").textContent=d.etco2;
   if(d.rr!==undefined)document.getElementById("rr").textContent=d.rr;
-  if(d.temp!==undefined)document.getElementById("temp").textContent=Number(d.temp).toFixed(1);
+  if(d.temp!==undefined){
+    const tNum = Number(d.temp);
+    document.getElementById("temp").textContent = Number.isFinite(tNum) ? tNum.toFixed(1) : d.temp;
+  }
 }
 function applyMonitorRhythm(d){
   activeRhythm=d.rhythm||"nsr";
+  pulseStatus=(["pea","vf","vf_fine","asystole"].includes(d.rhythm))?"pulseless":(d.pulseStatus||"present");
+  rhythmSeed=Number(d.seed)||17;
   const rate=Math.max(0,Number(d.rate)||0);
   HR=rate;period=rate>0?60/rate:1e9;buildRhythmEvents();
-  document.getElementById("hr").textContent=activeRhythm==="asystole"?0:rate;
-  document.getElementById("rhythmText").textContent=(d.rhythm||"").replaceAll("_"," ").toUpperCase()+" · "+rate+" bpm";
+  document.getElementById("hr").textContent=["asystole","vf","vf_fine"].includes(activeRhythm)?0:rate;
+  document.getElementById("rhythmText").textContent=(d.rhythm||"").replaceAll("_"," ").toUpperCase()+" · "+rate+" bpm · "+(pulseStatus==="pulseless"?"NO PULSE":"PULSE");
 }
 function applyMonitorTherapy(d){
-  document.getElementById("therapyText").textContent=`THERAPY: ${d.mode||"—"} · ${d.status||"—"} · ${d.energy??"—"} J`;
+  const mode = d.mode || "Monitor";
+  if(d.energy !== undefined && d.energy !== null){
+    targetEnergy = Number(d.energy) || 200;
+    const sel = document.getElementById("defibEnergySelect");
+    if(![...sel.options].some(o => Number(o.value) === targetEnergy)){
+      const opt = document.createElement("option");
+      opt.value = String(targetEnergy); opt.textContent = `${targetEnergy} J`;
+      sel.appendChild(opt);
+    }
+    sel.value = String(targetEnergy); updateDefibUI();
+  }
+  if(d.paceRate !== undefined && d.paceRate !== null) simPaceRate = Math.max(30, Math.min(180, Number(d.paceRate) || 70));
+  if(d.paceMa !== undefined && d.paceMa !== null) simPaceMa = Math.max(0, Math.min(200, Number(d.paceMa) || 60));
+
+  if(mode === "Manual Defibrillation"){
+    setPacingPanelVisible(false); setDefibPanelVisible(true);
+    document.getElementById("therapyText").textContent = `THERAPY: Manual Defibrillation · ${targetEnergy} J`;
+  }else if(mode === "Transcutaneous Pacing"){
+    setDefibPanelVisible(false); setPacingPanelVisible(true);
+    if(simPaceRunning) restartPaceTicker();
+    document.getElementById("therapyText").textContent = `THERAPY: Transcutaneous Pacing (${simPaceMode}) · ${simPaceRate} ppm · ${simPaceMa} mA`;
+  }else{
+    setDefibPanelVisible(false); setPacingPanelVisible(false);
+    document.getElementById("therapyText").textContent = `THERAPY: ${mode} · ${d.energy??"—"} J`;
+  }
 }
-function applyMonitorECG(d){
-  document.getElementById("ecgText").textContent=`12-LEAD: ${d.patternLabel||d.pattern||"Captured"}${d.patientId?" · "+d.patientId:""}`;
+function applyMonitorDisplay(d){
+  const map={ecgWave:".wave-row:has(#ecg)",plethWave:".wave-row:has(#pleth)",capnoWave:".wave-row:has(#capno)",hr:"#hr",spo2:"#spo2",bp:"#bp",etco2:"#etco2",rr:"#rr",temp:"#temp",rhythmInfo:"#liveScenario"};
+  Object.entries(map).forEach(([k,sel])=>{const el=document.querySelector(sel);if(el)el.closest(".value")?.style.setProperty("display",d[k]===false?"none":"");if(!el?.closest(".value")&&el)el.style.display=d[k]===false?"none":"";});
+  ["ecgWave","plethWave","capnoWave"].forEach(k=>{const id={ecgWave:"ecg",plethWave:"pleth",capnoWave:"capno"}[k],el=document.getElementById(id)?.closest(".wave-row");if(el)el.style.display=d[k]===false?"none":"";});
+  if(d.ecgAmp!==undefined)setEkgAmplitude(d.ecgAmp);
 }
+
 document.getElementById("createRoom").addEventListener("click",createRoom);
 document.getElementById("copyPin").addEventListener("click",async()=>{
   if(!monitorPin)return;
@@ -276,7 +1190,6 @@ document.getElementById("closeRoom").addEventListener("click",async()=>{
     setRoomStatus("ปิดห้อง "+monitorPin+" แล้ว");
   }catch(err){setRoomStatus("ปิดห้องไม่สำเร็จ: "+err.message)}
 });
-
 </script>
 </body>
 </html>
