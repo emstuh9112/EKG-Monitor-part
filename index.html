@@ -6,119 +6,118 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<title>EMS Monitor – Simulation v4.9.2</title>
+<title>EMS Monitor – Simulation v4.9.7</title>
 <style>
 :root{--bg:#050a0b;--panel:#071112;--grid:#17302d;--green:#35ff78;--cyan:#37e7ef;--yellow:#ffe45c;--white:#e9f4f1;--muted:#8da6a0;--red:#ff5757;--orange:#ff9f43}
 *{box-sizing:border-box}
-body{margin:0;background:#10191b;color:var(--white);font-family:Arial,"Tahoma",sans-serif;min-height:100vh;padding:12px}
-.monitor{width:min(1500px,100%);background:#111b1d;border:2px solid #435357;border-radius:18px;padding:12px;box-shadow:0 20px 60px #0009}
-.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:2px 4px 10px;flex-wrap:wrap}
-.brand{font-weight:800;letter-spacing:1.5px;font-size:clamp(16px,2vw,22px)}
+body{margin:0;background:#10191b;color:var(--white);font-family:Arial,"Tahoma",sans-serif;min-height:100vh;padding:14px}
+.monitor{width:min(1500px,100%);background:#111b1d;border:2px solid #435357;border-radius:18px;padding:14px;box-shadow:0 20px 60px #0009}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:3px 5px 12px;flex-wrap:wrap}
+.brand{font-weight:800;letter-spacing:1.5px;font-size:clamp(16px,2vw,23px)}
 .brand span{color:var(--green)}
 .status{display:flex;gap:14px;align-items:center;color:#b7c9c5;font-size:12px}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px;box-shadow:0 0 8px var(--green)}
 .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .amp-group{display:inline-flex;align-items:center;gap:4px;background:#192527;border:1px solid #3c5052;border-radius:7px;padding:3px 6px;font-size:11px;color:#b7c9c5}
-button{border:1px solid #53696b;background:#263638;color:#f2f7f5;padding:7px 11px;border-radius:7px;font-weight:700;cursor:pointer}
-.amp-group button{padding:4px 8px;font-size:11px;border-radius:5px}
+button{border:1px solid #53696b;background:#263638;color:#f2f7f5;padding:8px 12px;border-radius:7px;font-weight:700;cursor:pointer}
+.amp-group button{padding:5px 8px;font-size:11px;border-radius:5px}
 button:hover:not(:disabled){background:#35494b}
 button:disabled{opacity:.42;cursor:not-allowed}
 button.active{border-color:var(--green);color:var(--green)}
-.screen{position:relative;background:var(--bg);border:2px solid #263b3a;border-radius:8px;padding:8px;display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:8px;height:min(74vh,640px);min-height:480px}
-.wave-area{display:flex;flex-direction:column;gap:6px;min-width:0;height:100%}
-.wave-row{position:relative;flex:1;min-height:0;background-color:#03090a;border:1px solid #172c2a;overflow:hidden;border-radius:3px}
+.screen{position:relative;background:var(--bg);border:2px solid #263b3a;border-radius:8px;padding:10px;display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:10px;min-height:560px}
+.wave-area{display:flex;flex-direction:column;gap:7px;min-width:0}
+.wave-row{position:relative;height:clamp(105px,17vh,150px);background-color:#03090a;border:1px solid #172c2a;overflow:hidden;border-radius:3px}
 .wave-row.ecg-primary{z-index:25}
 .wave-row canvas{width:100%;height:100%;display:block}
-.wave-label{position:absolute;top:6px;left:8px;z-index:2;font-size:12px;font-weight:800;text-shadow:0 1px 4px #000}
-.wave-scale{position:absolute;right:8px;top:6px;z-index:2;font-size:10px;color:#6c8980}
-.values{position:relative;z-index:5;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,minmax(0,1fr));gap:6px;min-width:0;height:100%}
-.value{background:#03090a;border:1px solid #1b302f;border-radius:4px;padding:8px 8px;display:flex;flex-direction:column;justify-content:space-between;min-height:0}
-.value .label{font-size:12px;font-weight:800;letter-spacing:.5px}
-.value .number{font-size:clamp(28px,3.8vw,50px);font-weight:700;line-height:1;letter-spacing:-1.5px}
-.value .unit{font-size:10px;color:#9ab0aa}
+.wave-label{position:absolute;top:7px;left:9px;z-index:2;font-size:13px;font-weight:800;text-shadow:0 1px 4px #000}
+.wave-scale{position:absolute;right:8px;top:7px;z-index:2;font-size:10px;color:#6c8980}
+.values{position:relative;z-index:5;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,1fr);gap:8px;min-width:0}
+.value{background:#03090a;border:1px solid #1b302f;border-radius:4px;padding:10px 9px;display:flex;flex-direction:column;justify-content:space-between;min-height:105px}
+.value .label{font-size:13px;font-weight:800;letter-spacing:.5px}
+.value .number{font-size:clamp(34px,5vw,58px);font-weight:700;line-height:1;letter-spacing:-2px}
+.value .unit{font-size:11px;color:#9ab0aa}
 .green{color:var(--green)}.cyan{color:var(--cyan)}.yellow{color:var(--yellow)}.white{color:var(--white)}.red{color:var(--red)}.orange{color:var(--orange)}
-.bp{grid-column:span 2}
-.bp .number{font-size:clamp(26px,3.5vw,44px)}
+.bp{grid-column:span 2;min-height:110px}
+.bp .number{font-size:clamp(32px,4.5vw,52px)}
 
 /* Defibrillator & Pacing overlay panels */
-.defib-panel, .pacing-panel{display:none;position:absolute;left:8px;right:8px;top:35%;bottom:8px;z-index:15;background:rgba(7,18,22,.96);border:2px solid #3c6b70;border-radius:10px;padding:12px 14px;box-shadow:0 12px 34px #000c;flex-direction:column;justify-content:space-between;gap:10px}
+.defib-panel, .pacing-panel{display:none;position:absolute;left:10px;right:10px;top:168px;bottom:10px;z-index:15;background:rgba(7,18,22,.96);border:2px solid #3c6b70;border-radius:10px;padding:14px 16px;box-shadow:0 12px 34px #000c;flex-direction:column;justify-content:space-between;gap:12px}
 .defib-panel.show, .pacing-panel.show{display:flex}
 .pacing-panel{border-color:#42e3a2}
-.defib-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid #223c42;padding-bottom:6px}
-.defib-title{font-size:15px;font-weight:800;letter-spacing:.8px;color:#55d8e8;display:flex;align-items:center;gap:10px}
-.sync-pill{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid #53696b;color:#b7c9c5;background:#132328}
+.defib-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid #223c42;padding-bottom:8px}
+.defib-title{font-size:16px;font-weight:800;letter-spacing:.8px;color:#55d8e8;display:flex;align-items:center;gap:10px}
+.sync-pill{font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid #53696b;color:#b7c9c5;background:#132328}
 .sync-pill.on{border-color:#ffe45c;color:#ffe45c;background:#372f0d}
-.aed-pill{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid #42e3a2;color:#42e3a2;background:#0b291e}
-.defib-body{display:grid;grid-template-columns:1.1fr 1.2fr 1.4fr;gap:12px;align-items:center}
-.energy-box{background:#040d10;border:1px solid #233e44;border-radius:8px;padding:8px 10px}
-.energy-box label{display:block;font-size:11px;color:#9cb8be;margin-bottom:4px}
-.energy-select{width:100%;background:#0a1b20;color:#ffe45c;border:1px solid #476c73;border-radius:6px;padding:6px 8px;font-size:14px;font-weight:800}
-.charge-meter{background:#040d10;border:1px solid #233e44;border-radius:8px;padding:8px 12px;display:flex;flex-direction:column;gap:5px}
+.aed-pill{font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid #42e3a2;color:#42e3a2;background:#0b291e}
+.defib-body{display:grid;grid-template-columns:1.1fr 1.2fr 1.4fr;gap:14px;align-items:center}
+.energy-box{background:#040d10;border:1px solid #233e44;border-radius:8px;padding:10px 12px}
+.energy-box label{display:block;font-size:11px;color:#9cb8be;margin-bottom:6px}
+.energy-select{width:100%;background:#0a1b20;color:#ffe45c;border:1px solid #476c73;border-radius:6px;padding:8px 10px;font-size:16px;font-weight:800}
+.charge-meter{background:#040d10;border:1px solid #233e44;border-radius:8px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}
 .charge-top{display:flex;justify-content:space-between;align-items:baseline}
-.charge-num{font-size:28px;font-weight:900;color:#ffe45c;line-height:1}
-.charge-target{font-size:11px;color:#9cb8be}
-.bar-bg{width:100%;height:12px;background:#102227;border-radius:999px;overflow:hidden;border:1px solid #2a474e}
+.charge-num{font-size:34px;font-weight:900;color:#ffe45c;line-height:1}
+.charge-target{font-size:12px;color:#9cb8be}
+.bar-bg{width:100%;height:14px;background:#102227;border-radius:999px;overflow:hidden;border:1px solid #2a474e}
 .bar-fill{height:100%;width:0%;background:linear-gradient(90deg,#37e7ef,#ffe45c,#ff5757);transition:width .08s linear}
-.defib-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.defib-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .btn-charge{background:#8a5a12;border-color:#ffb84d;color:#fff5dc}
 .btn-charge:hover:not(:disabled){background:#a86e16}
 .btn-sync{background:#183344;border-color:#55d8e8;color:#aef5ff}
 .btn-sync.active{background:#3b310c;border-color:#ffe45c;color:#ffe45c}
 .btn-aed{background:#123b2c;border-color:#42e3a2;color:#b4ffe0}
-.btn-shock{background:#7e1d24;border-color:#ff6b75;color:#fff;font-size:14px;padding:8px 14px}
+.btn-shock{background:#7e1d24;border-color:#ff6b75;color:#fff;font-size:15px;padding:10px 18px}
 .btn-shock:hover:not(:disabled){background:#a3242d}
-.defib-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:11px;color:#c3d8dd;background:#051013;border:1px solid #1e353b;border-radius:7px;padding:6px 10px}
+.defib-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:#c3d8dd;background:#051013;border:1px solid #1e353b;border-radius:7px;padding:8px 12px}
 
-.pacing-body{display:grid;grid-template-columns:1fr 1.15fr 1.15fr 1.2fr;gap:10px;align-items:stretch}
-.pace-card{background:#040d10;border:1px solid #233e44;border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;justify-content:space-between;gap:6px}
-.pace-card label{font-size:10px;color:#9cb8be;font-weight:700;letter-spacing:.4px}
-.pace-mode-btns{display:flex;flex-direction:column;gap:5px}
-.btn-pmode{background:#12252b;border-color:#3a5b63;color:#b8d2ca;padding:6px 8px;font-size:12px;text-align:center}
+.pacing-body{display:grid;grid-template-columns:1fr 1.15fr 1.15fr 1.2fr;gap:12px;align-items:stretch}
+.pace-card{background:#040d10;border:1px solid #233e44;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;justify-content:space-between;gap:8px}
+.pace-card label{font-size:11px;color:#9cb8be;font-weight:700;letter-spacing:.4px}
+.pace-mode-btns{display:flex;flex-direction:column;gap:6px}
+.btn-pmode{background:#12252b;border-color:#3a5b63;color:#b8d2ca;padding:9px 10px;font-size:13px;text-align:center}
 .btn-pmode.active{background:#0f3a2c;border-color:#42e3a2;color:#42e3a2;box-shadow:0 0 10px #42e3a233}
-.pace-dial{display:flex;align-items:center;justify-content:space-between;gap:6px}
-.pace-val{font-size:28px;font-weight:900;line-height:1;color:#42e3a2}
+.pace-dial{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pace-val{font-size:34px;font-weight:900;line-height:1;color:#42e3a2}
 .pace-val.ma{color:#ffe45c}
-.pace-unit{font-size:11px;color:#9cb8be}
-.step-btns{display:flex;gap:5px}
-.step-btns button{padding:5px 10px;font-size:14px;background:#193036;border-color:#476c73}
-.btn-pace-toggle{width:100%;height:100%;min-height:60px;font-size:14px;background:#114231;border-color:#42e3a2;color:#b9ffe2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.pace-unit{font-size:12px;color:#9cb8be}
+.step-btns{display:flex;gap:6px}
+.step-btns button{padding:8px 13px;font-size:16px;background:#193036;border-color:#476c73}
+.btn-pace-toggle{width:100%;height:100%;min-height:74px;font-size:16px;background:#114231;border-color:#42e3a2;color:#b9ffe2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
 .btn-pace-toggle.running{background:#7e1d24;border-color:#ff6b75;color:#fff}
-.pace-pulse-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#395257;margin-right:6px;vertical-align:middle;transition:background .06s,box-shadow .06s}
+.pace-pulse-dot{display:inline-block;width:11px;height:11px;border-radius:50%;background:#395257;margin-right:6px;vertical-align:middle;transition:background .06s,box-shadow .06s}
 .pace-pulse-dot.flash{background:#42e3a2;box-shadow:0 0 12px #42e3a2}
 
-/* Full-Screen 12-Lead Overlay (Blind / Unlabeled diagnosis for learners) */
-.ecg12-fullscreen{display:none;position:absolute;inset:0;z-index:40;background:#fff5f7;color:#14222c;border-radius:6px;padding:6px 10px;flex-direction:column;justify-content:space-between;overflow:hidden;width:100%;height:100%}
+/* Independent Full-Screen 12-Lead Overlay (Scaled proportionally to match Control without stretching) */
+.ecg12-fullscreen{display:none;position:absolute;inset:0;z-index:40;background:#1b2628;color:#000000;border-radius:6px;padding:8px 12px;flex-direction:column;justify-content:space-between;align-items:center;overflow:hidden;width:100%;height:100%}
 .ecg12-fullscreen.show{display:flex}
-.ecg12-top{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;gap:8px;padding-bottom:4px;border-bottom:1.5px solid #e09aa5;font-size:12px;line-height:1.2}
-.ecg12-top b{color:#0f172a}
-.ecg12-close{background:#7e1d24;border-color:#ff6b75;color:#fff;padding:3px 10px;font-size:11px;border-radius:5px}
-.ecg12-paper{flex:1 1 auto;min-height:0;margin-top:4px;background-color:#fff5f7;background-image:linear-gradient(to right,rgba(232,120,136,.24) 1px,transparent 1px),linear-gradient(to bottom,rgba(232,120,136,.24) 1px,transparent 1px),linear-gradient(to right,rgba(214,76,96,.52) 1.2px,transparent 1.2px),linear-gradient(to bottom,rgba(214,76,96,.52) 1.2px,transparent 1.2px);background-size:5px 5px,5px 5px,25px 25px,25px 25px;border:1.5px solid #d46a7a;border-radius:4px;padding:2px 6px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.ecg12-top{flex:0 0 auto;width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;padding-bottom:6px;color:#e9f4f1;font-size:12px;line-height:1.2}
+.ecg12-top b{color:#ffffff}
+.ecg12-close{background:#7e1d24;border-color:#ff6b75;color:#fff;padding:4px 10px;font-size:11px;border-radius:5px}
+.ecg12-stage{flex:1 1 auto;width:100%;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.ecg12-paper{width:auto;height:100%;max-width:100%;max-height:100%;aspect-ratio:1.38 / 1;background-color:#fff5f7;background-image:linear-gradient(to right,rgba(232,120,136,.24) 1px,transparent 1px),linear-gradient(to bottom,rgba(232,120,136,.24) 1px,transparent 1px),linear-gradient(to right,rgba(214,76,96,.52) 1.2px,transparent 1.2px),linear-gradient(to bottom,rgba(214,76,96,.52) 1.2px,transparent 1.2px);background-size:5px 5px,5px 5px,25px 25px,25px 25px;border:1.5px solid #d46a7a;border-radius:4px;padding:4px 8px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
 .ecg12-cols{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:0 10px;overflow:hidden}
 .ecg12-col{display:flex;flex-direction:column;height:100%;min-height:0;overflow:hidden}
 .ecg12-col.right{border-left:1.5px solid rgba(180,55,75,.58);padding-left:6px}
 .ecg12-cell{position:relative;flex:1 1 0;min-height:0;border-bottom:1px dashed rgba(214,76,96,.25);overflow:hidden;display:flex;align-items:center}
 .ecg12-cell:last-child{border-bottom:0}
-.ecg12-lead{position:absolute;top:1px;left:3px;z-index:2;font-size:10.5px;line-height:1.1;font-weight:800;color:#111827;background:rgba(255,255,255,.78);padding:0 3px;border-radius:2px}
+.ecg12-lead{position:absolute;top:1px;left:3px;z-index:2;font-size:10.5px;line-height:1.1;font-weight:800;color:#000000;background:rgba(255,255,255,.78);padding:0 3px;border-radius:2px}
 .ecg12-cell svg{width:100%;height:100%;max-height:100%;display:block}
-.ecg12-bottom{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;font-size:10px;line-height:1.2;font-weight:800;color:#1e293b;padding:2px 2px 1px}
+.ecg12-bottom{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;font-size:10px;line-height:1.2;font-weight:800;color:#000000;padding:2px 2px 1px}
 
-.scenario-bar{display:flex;gap:14px;flex-wrap:wrap;background:#091516;border:1px solid #263b3a;border-radius:5px;padding:7px 10px;margin-top:8px;font-size:11px;color:#b8d2ca}
-.scenario-bar.hidden-for-12lead{display:none}
-.footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#8da6a0;font-size:11px;padding:8px 4px 0}
+.footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#8da6a0;font-size:11px;padding:10px 4px 0}
 .notice{color:#ffc95a;font-weight:700}
 .shell{width:min(1500px,100%);margin:0 auto}
-.room-panel{background:#142326;border:1px solid #40595b;border-radius:12px;padding:12px 14px;margin:0 auto 10px;color:#e9f4f1}
+.room-panel{background:#142326;border:1px solid #40595b;border-radius:12px;padding:13px 15px;margin:0 auto 12px;color:#e9f4f1}
 .room-panel h2{font-size:16px;margin:0 0 6px}
-.room-help{font-size:12px;color:#a9c1bb;margin:0 0 8px}
-.room-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.pin-line{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:6px}
-.pin-number{font-size:32px;letter-spacing:8px;font-weight:900;color:#ffe45c;min-width:170px}
+.room-help{font-size:12px;color:#a9c1bb;margin:0 0 10px}
+.room-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+.pin-line{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:8px}
+.pin-number{font-size:34px;letter-spacing:8px;font-weight:900;color:#ffe45c;min-width:170px}
 .room-status{font-size:12px;color:#b7c9c5}
-.credit{font-size:10px;color:#81928f;text-align:center;padding:8px 0 2px;letter-spacing:.2px}
-@media(max-width:960px){.defib-body,.pacing-body{grid-template-columns:1fr}.defib-panel,.pacing-panel{top:35%}}
-@media(max-width:760px){body{padding:5px}.monitor{padding:8px;border-radius:10px}.screen{grid-template-columns:1fr;height:auto;min-height:540px;padding:6px}.wave-area{height:315px}.values{height:auto;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto}.value{min-height:84px}.bp{grid-column:span 2}.value .number{font-size:36px}.topbar{padding-bottom:8px}.status{font-size:10px}.ecg12-cols{grid-template-columns:1fr 1fr}.ecg12-lead{font-size:9.5px}}
-@media(max-width:480px){body{padding:6px}.room-panel{padding:10px}.pin-number{font-size:28px}}
-@media(max-width:380px){.value .number{font-size:30px}.value{padding:7px 6px}.label{font-size:11px!important}}
+.credit{font-size:10px;color:#81928f;text-align:center;padding:9px 0 2px;letter-spacing:.2px}
+@media(max-width:960px){.defib-body,.pacing-body{grid-template-columns:1fr}.defib-panel,.pacing-panel{top:125px}}
+@media(max-width:760px){body{padding:5px}.monitor{padding:8px;border-radius:10px}.screen{grid-template-columns:1fr;min-height:0;padding:6px}.wave-row{height:105px}.values{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto}.value{min-height:95px}.bp{grid-column:span 2}.value .number{font-size:42px}.topbar{padding-bottom:8px}.status{font-size:10px}.ecg12-lead{font-size:9.5px}.ecg12-paper{aspect-ratio:auto;width:100%;height:100%}}
+@media(max-width:480px){body{padding:6px}.room-panel{padding:10px}.pin-number{font-size:29px}}
+@media(max-width:380px){.value .number{font-size:34px}.value{padding:8px 6px}.label{font-size:11px!important}}
 </style>
 </head>
 <body>
@@ -159,11 +158,11 @@ button.active{border-color:var(--green);color:var(--green)}
     <aside class="values">
       <div class="value"><div class="label green">HR</div><div class="number green" id="hr">75</div><div class="unit">bpm · ECG</div></div>
       <div class="value"><div class="label cyan">SpO₂</div><div class="number cyan" id="spo2">98</div><div class="unit">%</div></div>
-      <div class="value bp"><div class="label white">NIBP</div><div class="number white" id="bp">120/80 <small style="font-size:15px"> (93)</small></div><div class="unit">mmHg · SYS / DIA (MAP)</div></div>
+      <div class="value bp"><div class="label white">NIBP</div><div class="number white" id="bp">120/80 <small style="font-size:17px"> (93)</small></div><div class="unit">mmHg · SYS / DIA (MAP)</div></div>
       <div class="value"><div class="label yellow">EtCO₂</div><div class="number yellow" id="etco2">38</div><div class="unit">mmHg</div></div>
       <div class="value"><div class="label green">RR</div><div class="number green" id="rr">16</div><div class="unit">breaths/min</div></div>
       <div class="value"><div class="label white">TEMP</div><div class="number white" id="temp">36.8</div><div class="unit">°C</div></div>
-      <div class="value"><div class="label white">ECG LEAD</div><div class="number white" style="font-size:26px">II</div><div class="unit">Lead selected</div></div>
+      <div class="value"><div class="label white">ECG LEAD</div><div class="number white" style="font-size:30px">II</div><div class="unit">Lead selected</div></div>
     </aside>
 
     <!-- Defibrillator Overlay Panel -->
@@ -191,7 +190,7 @@ button.active{border-color:var(--green);color:var(--green)}
         </div>
         <div class="charge-meter">
           <div class="charge-top">
-            <span class="charge-num"><span id="chargedValue">0</span> <small style="font-size:14px">J</small></span>
+            <span class="charge-num"><span id="chargedValue">0</span> <small style="font-size:15px">J</small></span>
             <span class="charge-target">TARGET: <b id="targetEnergyLabel">200</b> J</span>
           </div>
           <div class="bar-bg"><div class="bar-fill" id="chargeBar"></div></div>
@@ -259,28 +258,28 @@ button.active{border-color:var(--green);color:var(--green)}
       </div>
     </div>
 
-    <!-- Full-Screen 12-Lead Overlay (No answer clues shown to learners) -->
+    <!-- Independent Full-Screen 12-Lead Overlay (Proportional aspect ratio to Control; Black traces; No answer hints) -->
     <div class="ecg12-fullscreen" id="ecg12Overlay">
       <div class="ecg12-top">
-        <div><b>12-LEAD ECG</b> · Rate: <b id="ovRate">75</b> bpm</div>
+        <div><b>12-LEAD ECG</b></div>
         <button type="button" class="ecg12-close" id="btnClose12Overlay">✕ ปิด 12-Lead</button>
       </div>
-      <div class="ecg12-paper">
-        <div class="ecg12-cols">
-          <div class="ecg12-col" id="ovColLeft"></div>
-          <div class="ecg12-col right" id="ovColRight"></div>
-        </div>
-        <div class="ecg12-bottom">
-          <span>SIMULATION / TRAINING ONLY</span>
-          <span>25 mm/sec &nbsp;&nbsp;&nbsp; 10 mm/mV</span>
+      <div class="ecg12-stage">
+        <div class="ecg12-paper">
+          <div class="ecg12-cols">
+            <div class="ecg12-col" id="ovColLeft"></div>
+            <div class="ecg12-col right" id="ovColRight"></div>
+          </div>
+          <div class="ecg12-bottom">
+            <span>SIMULATION ONLY</span>
+            <span>25 mm/sec &nbsp;&nbsp;&nbsp; 10 mm/mV</span>
+          </div>
         </div>
       </div>
     </div>
   </section>
-  <div id="liveScenario" class="scenario-bar">
-    <span>RHYTHM: <b id="rhythmText">NSR · 75 bpm · PULSE</b></span>
-    <span id="therapyText">THERAPY: —</span>
-    <span id="ecgText">12-LEAD: —</span>
+  <div id="liveScenario" style="display:flex;gap:14px;flex-wrap:wrap;background:#091516;border:1px solid #263b3a;border-radius:5px;padding:8px 10px;margin-top:8px;font-size:11px;color:#b8d2ca">
+    <span>RHYTHM: <b id="rhythmText">NSR</b></span><span id="therapyText">THERAPY: —</span>
   </div>
   <footer class="footer"><span>Patient: SIMULATION · Adult</span><span class="notice">FOR TRAINING / SIMULATION ONLY — NOT FOR CLINICAL USE</span><span>EMS THAMMASAT</span></footer>
 </main>
@@ -810,7 +809,12 @@ const EMSECG = (() => {
       "V3":  { p: 0.65, q: 0.1,  r: 0.85, s: 1.4,  t: 1.10 },
       "V4":  { p: 0.75, q: 0.4,  r: 1.25, s: 0.7,  t: 1.15 },
       "V5":  { p: 0.80, q: 0.8,  r: 1.15, s: 0.35, t: 0.95 },
-      "V6":  { p: 0.75, q: 0.8,  r: 0.95, s: 0.2,  t: 0.80 }
+      "V6":  { p: 0.75, q: 0.8,  r: 0.95, s: 0.2,  t: 0.80 },
+      "V3R": { p: 0.45, q: 0.0,  r: 0.35, s: 2.2,  t: -0.25 },
+      "V4R": { p: 0.40, q: 0.0,  r: 0.30, s: 2.4,  t: -0.30 },
+      "V7":  { p: 0.75, q: 0.6,  r: 1.05, s: 0.35, t: 0.90 },
+      "V8":  { p: 0.70, q: 0.6,  r: 0.95, s: 0.30, t: 0.85 },
+      "V9":  { p: 0.65, q: 0.5,  r: 0.85, s: 0.25, t: 0.80 }
     };
     return map[lead] || map["II"];
   }
@@ -934,80 +938,82 @@ const EMSECG = (() => {
   return { events, valueAt };
 })();
 
-/* 12-Lead Full-Screen Renderer (Uniform black trace, no answer hints on monitor) */
+/* Independent 12-Lead Renderer (Exact match to Control pointsMap; Black traces; No answer hints) */
 const LEFT_LEADS = ["I","II","III","aVR","aVL","aVF"];
-const RIGHT_LEADS = ["V1","V2","V3","V4","V5","V6"];
+const DEFAULT_RIGHT_LEADS = ["V1","V2","V3","V4","V5","V6"];
 
-function buildOverlayStripPoints(rate, rhythm, lead, stMap, isRightCol, widthPx = 620, heightPx = 68, spanSec = 4.6){
+function resolveRightLeads(d){
+  if(Array.isArray(d.rightLeads) && d.rightLeads.length === 6) return d.rightLeads;
+  if(d.extraLeadMode === "posterior") return ["V1","V2","V3","V7","V8","V9"];
+  if(d.extraLeadMode === "rv") return ["V1","V2","V3R","V4R","V5","V6"];
+  return [...DEFAULT_RIGHT_LEADS];
+}
+
+function buildFallbackStripPoints(rate, lead, stMap, isRightCol, widthPx = 420, heightPx = 68, spanSec = 4.2){
   const r = Math.max(10, Math.min(260, Number(rate) || 75));
-  const rh = rhythm || "nsr";
   const stMode = (stMap && stMap[lead]) || "normal";
   const stShift = stMode === "up" ? 0.42 : (stMode === "down" ? -0.30 : 0);
   const seed = 17;
-  const evts = EMSECG.events(rh, r, seed, 12);
+  const evts = EMSECG.events("nsr", r, seed, 12);
   const baselineY = heightPx * 0.62;
-  const ampScale = heightPx * 0.32;
+  const ampScale = heightPx * 0.34;
 
-  const calX = 22;
-  const calHighY = baselineY - heightPx * 0.22;
+  const calWidthPx = 22;
+  const calHighY = baselineY - heightPx * 0.24;
   const pts = [
     `0,${baselineY.toFixed(1)}`,
     `4,${baselineY.toFixed(1)}`,
     `5,${calHighY.toFixed(1)}`,
     `14,${calHighY.toFixed(1)}`,
     `15,${baselineY.toFixed(1)}`,
-    `${calX},${baselineY.toFixed(1)}`
+    `${calWidthPx},${baselineY.toFixed(1)}`
   ];
 
-  const startX = calX + 2;
-  const steps = Math.max(100, Math.floor((widthPx - startX) / 2));
-  const timeOffset = isRightCol ? 1.55 : 0;
+  const startX = calWidthPx + 2;
+  const steps = Math.max(80, Math.floor((widthPx - startX) / 2));
+  const timeOffset = isRightCol ? 1.45 : 0;
 
   for(let i = 0; i <= steps; i++){
     const frac = i / steps;
     const x = startX + frac * (widthPx - startX);
     const sec = timeOffset + frac * spanSec;
-    const z = EMSECG.valueAt(sec, rh, r, seed, evts, lead, stShift);
-    const clampedZ = Math.max(-1.25, Math.min(1.35, z));
-    const y = baselineY - clampedZ * ampScale;
+    const z = EMSECG.valueAt(sec, "nsr", r, seed, evts, lead, stShift);
+    const y = baselineY - z * ampScale;
     pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
   }
   return pts.join(" ");
 }
 
-function renderOverlayColumn(elId, leadList, rate, rhythm, stMap, isRightCol){
+function renderOverlayColumn(elId, leadList, rate, stMap, isRightCol, pointsMap = null){
   document.getElementById(elId).innerHTML = leadList.map(lead => {
+    const pts = (pointsMap && pointsMap[lead]) ? pointsMap[lead] : buildFallbackStripPoints(rate, lead, stMap, isRightCol, 420, 68, 4.2);
     return `<div class="ecg12-cell">
       <span class="ecg12-lead">${lead}</span>
-      <svg viewBox="0 0 620 68" preserveAspectRatio="none">
-        <polyline points="${buildOverlayStripPoints(rate, rhythm, lead, stMap, isRightCol, 620, 68, 4.6)}" fill="none" stroke="#111827" stroke-width="1.5" stroke-linejoin="round"/>
+      <svg viewBox="0 0 420 68" preserveAspectRatio="none">
+        <polyline points="${pts}" fill="none" stroke="#000000" stroke-width="1.6" stroke-linejoin="round"/>
       </svg>
     </div>`;
   }).join("");
 }
 
 function applyMonitorECG(d){
-  document.getElementById("ecgText").textContent = d && d.visible ? "12-LEAD: ACTIVE" : "12-LEAD: —";
   const overlay = document.getElementById("ecg12Overlay");
-  const scenarioBar = document.getElementById("liveScenario");
   if(!d || d.visible !== true){
     overlay.classList.remove("show");
-    scenarioBar.classList.remove("hidden-for-12lead");
     return;
   }
   const rate = Math.max(10, Math.min(260, Number(d.rate) || 75));
-  const rh = d.rhythm || activeRhythm || "nsr";
   const stMap = d.leadStates || {};
-  document.getElementById("ovRate").textContent = rate;
-  renderOverlayColumn("ovColLeft", LEFT_LEADS, rate, rh, stMap, false);
-  renderOverlayColumn("ovColRight", RIGHT_LEADS, rate, rh, stMap, true);
+  const pointsMap = d.pointsMap || null;
+  const leftLeads = (Array.isArray(d.leftLeads) && d.leftLeads.length === 6) ? d.leftLeads : LEFT_LEADS;
+  const rightLeads = resolveRightLeads(d);
+  renderOverlayColumn("ovColLeft", leftLeads, rate, stMap, false, pointsMap);
+  renderOverlayColumn("ovColRight", rightLeads, rate, stMap, true, pointsMap);
   overlay.classList.add("show");
-  scenarioBar.classList.add("hidden-for-12lead");
 }
 
 document.getElementById("btnClose12Overlay").addEventListener("click", ()=>{
   document.getElementById("ecg12Overlay").classList.remove("show");
-  document.getElementById("liveScenario").classList.remove("hidden-for-12lead");
 });
 
 let rhythmSeed=17;
@@ -1033,7 +1039,7 @@ function draw(id,fn,amp,baseline,t,color,cycle){
   }
   ctx.stroke();ctx.restore();
 }
-function beep(){if(!soundOn)return;try{ensureAudio();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.value=880;g.gain.setValueAtTime(.0001,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.12,audioCtx.currentTime+.006);g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+.055);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.06)}catch(e){}}
+function beep(){if(!soundOn)return;try{ensureAudio();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.value=880;g.gain.setValueAtTime(.0001,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.12,audioCtx.currentTime+.006);g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+.055);o.connect(g);g.connect(ctx.destination);o.start();o.stop(audioCtx.currentTime+.06)}catch(e){}}
 function tick(now){
   const t=(now-start)/1000;
   if(!paused){
@@ -1097,7 +1103,7 @@ async function createRoom(){
       vitals:{hr:75,spo2:98,rr:16,nibp:{sys:120,dia:80},etco2:38,temp:36.8,pleth:75,capno:75},
       rhythm:{group:"sinus",rhythm:"nsr",rate:75,pulseStatus:"present"},
       therapy:{mode:"Monitor",energy:200,paceRate:70,paceMa:60},
-      ecg12lead:{visible:false,pattern:"normal",patternLabel:"Normal (No ST shift)",rate:75,patientId:"",leadStates:{},timestamp:null},
+      ecg12lead:{visible:false,pattern:"normal",patternLabel:"Normal (No ST shift)",extraLeadMode:"standard",rightLeads:["V1","V2","V3","V4","V5","V6"],rate:75,patientId:"",leadStates:{},timestamp:null},
       display:{ecgWave:true,plethWave:true,capnoWave:true,hr:true,spo2:true,bp:true,etco2:true,rr:true,temp:true,rhythmInfo:true,ecgAmp:1.0}
     });
     document.getElementById("pinDisplay").textContent=monitorPin;
@@ -1122,7 +1128,7 @@ function applyMonitorVitals(d){
   if(d.nibp){
     const sys = Number(d.nibp.sys), dia = Number(d.nibp.dia);
     const map = (Number.isFinite(sys) && Number.isFinite(dia)) ? Math.round((sys+2*dia)/3) : "—";
-    document.getElementById("bp").innerHTML=`${d.nibp.sys}/${d.nibp.dia} <small style="font-size:15px"> (${map})</small>`;
+    document.getElementById("bp").innerHTML=`${d.nibp.sys}/${d.nibp.dia} <small style="font-size:17px"> (${map})</small>`;
   }
   if(d.etco2!==undefined)document.getElementById("etco2").textContent=d.etco2;
   if(d.rr!==undefined)document.getElementById("rr").textContent=d.rr;
