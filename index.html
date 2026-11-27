@@ -6,7 +6,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<title>EMS Monitor – Simulation v4.9.7</title>
+<title>EMS Monitor – Simulation v4.9.8</title>
 <style>
 :root{--bg:#050a0b;--panel:#071112;--grid:#17302d;--green:#35ff78;--cyan:#37e7ef;--yellow:#ffe45c;--white:#e9f4f1;--muted:#8da6a0;--red:#ff5757;--orange:#ff9f43}
 *{box-sizing:border-box}
@@ -86,7 +86,7 @@ button.active{border-color:var(--green);color:var(--green)}
 .pace-pulse-dot{display:inline-block;width:11px;height:11px;border-radius:50%;background:#395257;margin-right:6px;vertical-align:middle;transition:background .06s,box-shadow .06s}
 .pace-pulse-dot.flash{background:#42e3a2;box-shadow:0 0 12px #42e3a2}
 
-/* Independent Full-Screen 12-Lead Overlay (Scaled proportionally to match Control without stretching) */
+/* Independent Full-Screen 12-Lead Overlay (Scaled proportionally to Control without stretching) */
 .ecg12-fullscreen{display:none;position:absolute;inset:0;z-index:40;background:#1b2628;color:#000000;border-radius:6px;padding:8px 12px;flex-direction:column;justify-content:space-between;align-items:center;overflow:hidden;width:100%;height:100%}
 .ecg12-fullscreen.show{display:flex}
 .ecg12-top{flex:0 0 auto;width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;padding-bottom:6px;color:#e9f4f1;font-size:12px;line-height:1.2}
@@ -228,7 +228,7 @@ button.active{border-color:var(--green);color:var(--green)}
         <div class="pace-card">
           <label>PACING RATE (ppm)</label>
           <div class="pace-dial">
-            <div><span class="pace-val" id="uiPaceRate">70</span> <span class="pace-unit">ppm</span></div>
+            <div><span class="pace-val" id="uiPaceRate">0</span> <span class="pace-unit">ppm</span></div>
             <div class="step-btns">
               <button type="button" id="btnPaceRateDown">−</button>
               <button type="button" id="btnPaceRateUp">+</button>
@@ -238,7 +238,7 @@ button.active{border-color:var(--green);color:var(--green)}
         <div class="pace-card">
           <label>OUTPUT / ENERGY (mA)</label>
           <div class="pace-dial">
-            <div><span class="pace-val ma" id="uiPaceMa">60</span> <span class="pace-unit">mA</span></div>
+            <div><span class="pace-val ma" id="uiPaceMa">0</span> <span class="pace-unit">mA</span></div>
             <div class="step-btns">
               <button type="button" id="btnPaceMaDown">−</button>
               <button type="button" id="btnPaceMaUp">+</button>
@@ -253,7 +253,7 @@ button.active{border-color:var(--green);color:var(--green)}
         </div>
       </div>
       <div class="defib-foot">
-        <span id="paceAdvisoryMsg">โหมดจำลอง Transcutaneous Pacing (รูปคลื่น ECG ด้านบนยึดตามค่าหลักจาก Part Control)</span>
+        <span id="paceAdvisoryMsg">ตั้งค่า Rate และ Output (mA) แล้วกด START PACING (Capture สมบูรณ์ที่ ≥ 100 mA)</span>
         <span id="paceLastAction">Last action: Standby</span>
       </div>
     </div>
@@ -287,6 +287,7 @@ button.active{border-color:var(--green);color:var(--green)}
 </div>
 <script>
 let HR=75, period=60/HR, activeRhythm="nsr", pulseStatus="present", ecgAmpScale=1.0;
+let baseControlRhythm="nsr", baseControlRate=75, baseControlPulse="present";
 let paused=false,soundOn=true, audioCtx=null,lastBeat=-1,start=performance.now(),rhythmEvents=[];
 const colors={ecg:'#35ff78',pleth:'#37e7ef',capno:'#ffe45c'};
 function setupCanvas(id){const c=document.getElementById(id),ctx=c.getContext('2d');function resize(){const r=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;c.width=Math.max(1,Math.floor(r.width*dpr));c.height=Math.max(1,Math.floor(r.height*dpr));ctx.setTransform(dpr,0,0,dpr,0,0)}resize();new ResizeObserver(resize).observe(c);return {c,ctx}}
@@ -586,7 +587,7 @@ function setDefibPanelVisible(show){
 }
 
 /* Transcutaneous Pacing Simulation Controller */
-let simPaceMode = 'Demand', simPaceRate = 70, simPaceMa = 60, simPaceRunning = false, simPaceTimer = null;
+let simPaceMode = 'Demand', simPaceRate = 0, simPaceMa = 0, simPaceRunning = false, simPaceTimer = null;
 
 function playPaceClick(){
   if(!soundOn) return;
@@ -613,10 +614,52 @@ function flashPaceDot(){
 
 function restartPaceTicker(){
   if(simPaceTimer){ clearInterval(simPaceTimer); simPaceTimer = null; }
-  if(!simPaceRunning) return;
-  const intervalMs = Math.max(250, Math.round(60000 / Math.max(30, simPaceRate)));
+  if(!simPaceRunning || simPaceRate <= 0) return;
+  const intervalMs = Math.max(250, Math.round(60000 / simPaceRate));
   flashPaceDot();
   simPaceTimer = setInterval(flashPaceDot, intervalMs);
+}
+
+function syncEffectiveRhythm(){
+  const panelOpen = document.getElementById('pacingPanel').classList.contains('show');
+  if(panelOpen && simPaceRunning && simPaceRate > 0){
+    const captureRatio = Math.min(1, Math.max(0, simPaceMa / 100));
+    if(captureRatio >= 1){
+      activeRhythm = "paced_capture";
+      HR = simPaceRate;
+      period = HR > 0 ? 60 / HR : 1e9;
+      pulseStatus = "present";
+    }else if(captureRatio <= 0){
+      activeRhythm = baseControlRhythm;
+      HR = baseControlRate;
+      period = HR > 0 ? 60 / HR : 1e9;
+      pulseStatus = (["pea","vf","vf_fine","asystole"].includes(baseControlRhythm)) ? "pulseless" : baseControlPulse;
+    }else{
+      activeRhythm = baseControlRhythm;
+      const effectiveIntrinsic = (["asystole","vf","vf_fine"].includes(baseControlRhythm)) ? 0 : baseControlRate;
+      HR = Math.round(effectiveIntrinsic + (simPaceRate - effectiveIntrinsic) * captureRatio);
+      period = HR > 0 ? 60 / HR : 1e9;
+      pulseStatus = "present";
+    }
+  }else{
+    activeRhythm = baseControlRhythm;
+    HR = baseControlRate;
+    period = HR > 0 ? 60 / HR : 1e9;
+    pulseStatus = (["pea","vf","vf_fine","asystole"].includes(baseControlRhythm)) ? "pulseless" : baseControlPulse;
+  }
+
+  buildRhythmEvents();
+
+  const displayHr = (["asystole","vf","vf_fine"].includes(activeRhythm) && (!simPaceRunning || simPaceMa <= 0)) ? 0 : HR;
+  document.getElementById("hr").textContent = displayHr;
+
+  if(panelOpen && simPaceRunning && simPaceRate > 0){
+    const pct = Math.min(100, Math.round((simPaceMa / 100) * 100));
+    const capLabel = pct >= 100 ? "VENTRICULAR PACED (CAPTURED)" : (pct > 0 ? `PACING (${pct}% CAPTURE)` : "PACING (NON-CAPTURE)");
+    document.getElementById("rhythmText").textContent = `${capLabel} · ${displayHr} bpm · ${pulseStatus === "pulseless" ? "NO PULSE" : "PULSE"}`;
+  }else{
+    document.getElementById("rhythmText").textContent = (baseControlRhythm || "").replaceAll("_", " ").toUpperCase() + " · " + baseControlRate + " bpm · " + (pulseStatus === "pulseless" ? "NO PULSE" : "PULSE");
+  }
 }
 
 function updatePacingUI(){
@@ -633,9 +676,10 @@ function updatePacingUI(){
 
   toggleBtn.classList.toggle('running', simPaceRunning);
   if(simPaceRunning){
+    const capPct = Math.min(100, Math.round((simPaceMa / 100) * 100));
     mainTxt.textContent = '■ STOP PACING';
     subTxt.textContent = 'กำลังปล่อยกระตุ้น (คลิกเพื่อหยุด)';
-    statusEl.textContent = `PACING ACTIVE (${simPaceMode.toUpperCase()}) · ${simPaceRate} ppm · ${simPaceMa} mA`;
+    statusEl.textContent = `PACING ACTIVE (${simPaceMode.toUpperCase()}) · ${simPaceRate} ppm · ${simPaceMa} mA (${capPct}% Capture)`;
     statusEl.style.color = '#42e3a2';
   }else{
     mainTxt.textContent = '▶ START PACING';
@@ -643,6 +687,7 @@ function updatePacingUI(){
     statusEl.textContent = `STANDBY (${simPaceMode.toUpperCase()}) · ${simPaceRate} ppm · ${simPaceMa} mA`;
     statusEl.style.color = '#ffe45c';
   }
+  syncEffectiveRhythm();
 }
 
 document.getElementById('btnPaceDemand').addEventListener('click', ()=>{
@@ -654,7 +699,7 @@ document.getElementById('btnPaceFixed').addEventListener('click', ()=>{
   document.getElementById('paceLastAction').textContent = 'Last action: Selected Fixed Mode';
 });
 document.getElementById('btnPaceRateDown').addEventListener('click', ()=>{
-  simPaceRate = Math.max(30, simPaceRate - 5); updatePacingUI();
+  simPaceRate = Math.max(0, simPaceRate - 5); updatePacingUI();
   if(simPaceRunning) restartPaceTicker();
   document.getElementById('paceLastAction').textContent = `Last action: Rate ${simPaceRate} ppm`;
 });
@@ -687,13 +732,26 @@ document.getElementById('btnPaceStartStop').addEventListener('click', ()=>{
 
 function setPacingPanelVisible(show){
   const panel = document.getElementById('pacingPanel');
+  const wasVisible = panel.classList.contains('show');
   if(show){
-    panel.classList.add('show'); updatePacingUI();
+    if(!wasVisible){
+      simPaceRate = 0;
+      simPaceMa = 0;
+      simPaceRunning = false;
+      if(simPaceTimer){ clearInterval(simPaceTimer); simPaceTimer = null; }
+      document.getElementById('pacePulseDot').classList.remove('flash');
+      document.getElementById('paceLastAction').textContent = 'Last action: Standby (Default 0 ppm / 0 mA)';
+    }
+    panel.classList.add('show');
+    updatePacingUI();
   }else{
     simPaceRunning = false;
+    simPaceRate = 0;
+    simPaceMa = 0;
     if(simPaceTimer){ clearInterval(simPaceTimer); simPaceTimer = null; }
     document.getElementById('pacePulseDot').classList.remove('flash');
-    panel.classList.remove('show'); updatePacingUI();
+    panel.classList.remove('show');
+    updatePacingUI();
   }
 }
 
@@ -1019,7 +1077,38 @@ document.getElementById("btnClose12Overlay").addEventListener("click", ()=>{
 let rhythmSeed=17;
 function buildRhythmEvents(){rhythmEvents=EMSECG.events(activeRhythm,HR,rhythmSeed);lastBeat=-1;}
 function ecgWave(p){return 0;}
-function ecgValueAt(sec){return EMSECG.valueAt(sec,activeRhythm,HR,rhythmSeed,rhythmEvents,"II");}
+function ecgValueAt(sec){
+  const panelOpen = document.getElementById('pacingPanel').classList.contains('show');
+  if(panelOpen && simPaceRunning && simPaceRate > 0){
+    const captureRatio = Math.min(1, Math.max(0, simPaceMa / 100));
+    if(captureRatio >= 1){
+      return EMSECG.valueAt(sec, "paced_capture", simPaceRate, rhythmSeed, rhythmEvents, "II");
+    }
+    const paceCycle = 60 / simPaceRate;
+    const pacePhase = ((sec + 3.17) % paceCycle + paceCycle) % paceCycle;
+    const spike = 1.08 * Math.exp(-0.5 * Math.pow(pacePhase / 0.0028, 2)) - 0.24 * Math.exp(-0.5 * Math.pow((pacePhase - 0.007) / 0.0032, 2));
+
+    if(captureRatio <= 0){
+      return EMSECG.valueAt(sec, baseControlRhythm, baseControlRate, rhythmSeed, rhythmEvents, "II") + spike;
+    }
+
+    const beatIndex = Math.floor((sec + 3.17) / paceCycle);
+    const beatHash = Math.sin((beatIndex + 1) * 78.233) * 43758.5453;
+    const isBeatCaptured = (beatHash - Math.floor(beatHash)) < captureRatio;
+
+    if(isBeatCaptured){
+      const d = pacePhase - 0.016;
+      const pacedQrs = -0.15 * Math.exp(-0.5 * Math.pow((d - 0.01) / 0.015, 2))
+                     + 0.90 * Math.exp(-0.5 * Math.pow((d - 0.055) / 0.036, 2))
+                     - 0.30 * Math.exp(-0.5 * Math.pow((d - 0.11) / 0.03, 2))
+                     - 0.22 * Math.exp(-0.5 * Math.pow((d - 0.28) / 0.085, 2));
+      return spike + pacedQrs;
+    }else{
+      return EMSECG.valueAt(sec, baseControlRhythm, baseControlRate, rhythmSeed, rhythmEvents, "II") + spike;
+    }
+  }
+  return EMSECG.valueAt(sec,activeRhythm,HR,rhythmSeed,rhythmEvents,"II");
+}
 function plethWave(p){if(pulseStatus==="pulseless")return .002*Math.sin(p*40);if(p<.12)return 0;if(p<.28)return (p-.12)/.16;if(p<.38)return 1-(p-.28)/.10*.35;if(p<.62)return .65-(p-.38)/.24*.55;return .10}
 function capWave(p){if(p<.12)return 0;if(p<.22)return (p-.12)/.10*.78;if(p<.68)return .78;if(p<.78)return .78*(1-(p-.68)/.10);return 0}
 function drawGrid(ctx,w,h){ctx.fillStyle='#03090a';ctx.fillRect(0,0,w,h);ctx.lineWidth=.6;ctx.strokeStyle='#102522';for(let x=0;x<w;x+=5){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}for(let y=0;y<h;y+=5){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}ctx.strokeStyle='#1b3932';ctx.lineWidth=1;for(let x=0;x<w;x+=25){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}for(let y=0;y<h;y+=25){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}}
@@ -1102,7 +1191,7 @@ async function createRoom(){
     await monitorRoom.child("state").update({
       vitals:{hr:75,spo2:98,rr:16,nibp:{sys:120,dia:80},etco2:38,temp:36.8,pleth:75,capno:75},
       rhythm:{group:"sinus",rhythm:"nsr",rate:75,pulseStatus:"present"},
-      therapy:{mode:"Monitor",energy:200,paceRate:70,paceMa:60},
+      therapy:{mode:"Monitor",energy:200,paceRate:0,paceMa:0},
       ecg12lead:{visible:false,pattern:"normal",patternLabel:"Normal (No ST shift)",extraLeadMode:"standard",rightLeads:["V1","V2","V3","V4","V5","V6"],rate:75,patientId:"",leadStates:{},timestamp:null},
       display:{ecgWave:true,plethWave:true,capnoWave:true,hr:true,spo2:true,bp:true,etco2:true,rr:true,temp:true,rhythmInfo:true,ecgAmp:1.0}
     });
@@ -1138,13 +1227,11 @@ function applyMonitorVitals(d){
   }
 }
 function applyMonitorRhythm(d){
-  activeRhythm=d.rhythm||"nsr";
-  pulseStatus=(["pea","vf","vf_fine","asystole"].includes(d.rhythm))?"pulseless":(d.pulseStatus||"present");
-  rhythmSeed=Number(d.seed)||17;
-  const rate=Math.max(0,Number(d.rate)||0);
-  HR=rate;period=rate>0?60/rate:1e9;buildRhythmEvents();
-  document.getElementById("hr").textContent=["asystole","vf","vf_fine"].includes(activeRhythm)?0:rate;
-  document.getElementById("rhythmText").textContent=(d.rhythm||"").replaceAll("_"," ").toUpperCase()+" · "+rate+" bpm · "+(pulseStatus==="pulseless"?"NO PULSE":"PULSE");
+  baseControlRhythm = d.rhythm || "nsr";
+  baseControlPulse = (["pea","vf","vf_fine","asystole"].includes(baseControlRhythm)) ? "pulseless" : (d.pulseStatus || "present");
+  rhythmSeed = Number(d.seed) || 17;
+  baseControlRate = Math.max(0, Number(d.rate) || 0);
+  syncEffectiveRhythm();
 }
 function applyMonitorTherapy(d){
   const mode = d.mode || "Monitor";
@@ -1158,15 +1245,12 @@ function applyMonitorTherapy(d){
     }
     sel.value = String(targetEnergy); updateDefibUI();
   }
-  if(d.paceRate !== undefined && d.paceRate !== null) simPaceRate = Math.max(30, Math.min(180, Number(d.paceRate) || 70));
-  if(d.paceMa !== undefined && d.paceMa !== null) simPaceMa = Math.max(0, Math.min(200, Number(d.paceMa) || 60));
 
   if(mode === "Manual Defibrillation"){
     setPacingPanelVisible(false); setDefibPanelVisible(true);
     document.getElementById("therapyText").textContent = `THERAPY: Manual Defibrillation · ${targetEnergy} J`;
   }else if(mode === "Transcutaneous Pacing"){
     setDefibPanelVisible(false); setPacingPanelVisible(true);
-    if(simPaceRunning) restartPaceTicker();
     document.getElementById("therapyText").textContent = `THERAPY: Transcutaneous Pacing (${simPaceMode}) · ${simPaceRate} ppm · ${simPaceMa} mA`;
   }else{
     setDefibPanelVisible(false); setPacingPanelVisible(false);
